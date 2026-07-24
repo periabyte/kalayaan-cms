@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "license": "MIT",
   "description": "Agent skill for deploying and managing a Kalayaan project safely",
+  "homepage": "https://kalayaan.periabyte.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/periabyte/kalayaan-cms.git",
+    "directory": "packages/skill"
+  },
+  "bugs": "https://github.com/periabyte/kalayaan-cms/issues",
   "type": "module",
   "files": [
     "SKILL.md"

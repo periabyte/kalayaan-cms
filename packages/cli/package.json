@@ -2,6 +2,14 @@
   "name": "@kalayaan/cli",
   "version": "0.1.2",
   "license": "MIT",
+  "description": "The `kalayaan` CLI implementation (login/init/dev/migrate/deploy/doctor/down). Most users should install the `kalayaan` package instead.",
+  "homepage": "https://kalayaan.periabyte.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/periabyte/kalayaan-cms.git",
+    "directory": "packages/cli"
+  },
+  "bugs": "https://github.com/periabyte/kalayaan-cms/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

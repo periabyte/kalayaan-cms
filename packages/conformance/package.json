@@ -2,6 +2,14 @@
   "name": "@kalayaan/adapter-conformance",
   "version": "0.1.2",
   "license": "MIT",
+  "description": "Shared conformance test suite for Kalayaan DatabaseAdapter implementations.",
+  "homepage": "https://kalayaan.periabyte.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/periabyte/kalayaan-cms.git",
+    "directory": "packages/conformance"
+  },
+  "bugs": "https://github.com/periabyte/kalayaan-cms/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

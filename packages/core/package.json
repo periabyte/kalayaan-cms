@@ -2,6 +2,14 @@
   "name": "@kalayaan/core",
   "version": "0.1.2",
   "license": "MIT",
+  "description": "Kalayaan core contracts: query DSL types, DatabaseAdapter/StorageAdapter/AIProvider/EmailProvider interfaces, the Ability RBAC model, and shared errors/helpers.",
+  "homepage": "https://kalayaan.periabyte.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/periabyte/kalayaan-cms.git",
+    "directory": "packages/core"
+  },
+  "bugs": "https://github.com/periabyte/kalayaan-cms/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
