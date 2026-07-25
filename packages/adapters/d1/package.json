@@ -25,10 +25,10 @@
     "@kalayaan/core": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.12.0",
-    "@cloudflare/workers-types": "^4.20260702.1",
+    "@cloudflare/vitest-pool-workers": "0.18.8",
+    "@cloudflare/workers-types": "^5.20260724.1",
     "@kalayaan/adapter-conformance": "workspace:^",
     "tsup": "^8.4.0",
-    "vitest": "^3.1.0"
+    "vitest": "^4.1.10"
   }
 }
