@@ -1,5 +1,14 @@
 # @kalayaan/adapter-d1
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [a80346b]
+  - @kalayaan/config@0.1.3
+  - @kalayaan/core@0.1.3
+  - @kalayaan/adapter-relational@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

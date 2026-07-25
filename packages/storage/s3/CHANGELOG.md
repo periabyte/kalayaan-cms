@@ -1,5 +1,12 @@
 # @kalayaan/storage-s3
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [a80346b]
+  - @kalayaan/core@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # kalayaan
 
+## 0.1.3
+
+### Patch Changes
+
+- a80346b: Add per-package READMEs and npm metadata (description, homepage, repository, bugs) — the
+  published packages had no README on npm.
+- Updated dependencies [a80346b]
+  - @kalayaan/cli@0.1.3
+  - @kalayaan/config@0.1.3
+  - @kalayaan/core@0.1.3
+  - @kalayaan/runtime@0.1.3
+  - @kalayaan/adapter-mysql@0.1.3
+  - @kalayaan/adapter-postgres@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

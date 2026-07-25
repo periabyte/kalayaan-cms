@@ -1,5 +1,12 @@
 # @kalayaan/admin
 
+## 0.1.3
+
+### Patch Changes
+
+- a80346b: Add per-package READMEs and npm metadata (description, homepage, repository, bugs) — the
+  published packages had no README on npm.
+
 ## 0.1.2
 
 ### Patch Changes

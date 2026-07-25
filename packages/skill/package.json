@@ -1,6 +1,6 @@
 {
   "name": "kalayaan-skill",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "MIT",
   "description": "Agent skill for deploying and managing a Kalayaan project safely",
   "homepage": "https://kalayaan.periabyte.dev/",
