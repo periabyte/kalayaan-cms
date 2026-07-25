@@ -1,6 +1,6 @@
 {
   "name": "kalayaan",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "A config-driven, self-deploying headless CMS for Cloudflare Workers, D1, R2, and KV. One cms.config.ts + `kalayaan login → init → deploy` yields a live site.",
   "homepage": "https://kalayaan.periabyte.dev/",

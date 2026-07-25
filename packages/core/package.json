@@ -1,6 +1,6 @@
 {
   "name": "@kalayaan/core",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "Kalayaan core contracts: query DSL types, DatabaseAdapter/StorageAdapter/AIProvider/EmailProvider interfaces, the Ability RBAC model, and shared errors/helpers.",
   "homepage": "https://kalayaan.periabyte.dev/",

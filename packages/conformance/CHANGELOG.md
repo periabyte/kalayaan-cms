@@ -1,5 +1,13 @@
 # @kalayaan/adapter-conformance
 
+## 0.2.0
+
+### Patch Changes
+
+- Updated dependencies [b8f673f]
+  - @kalayaan/config@0.2.0
+  - @kalayaan/core@0.2.0
+
 ## 0.1.3
 
 ### Patch Changes

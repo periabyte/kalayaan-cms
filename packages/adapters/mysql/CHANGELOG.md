@@ -1,5 +1,33 @@
 # @kalayaan/adapter-mysql
 
+## 0.2.0
+
+### Minor Changes
+
+- b8f673f: Media fields, singleton collections, and a `kalayaan update` command.
+
+  - **Media fields — multiple + typed.** `field.media()` now takes `many: true` for
+    an ordered gallery/attachments field (stored in a `<collection>_<field>` join
+    table referencing `media`, ordered by `sort`) and `accept: ["image" | "video" |
+"file"]` to restrict what a field accepts. The admin media picker filters by kind,
+    supports multi-select with reordering, and shows non-image assets; GraphQL types a
+    many-media field as an ordered id list.
+  - **Singleton collections.** `collection(name, { singleton: true })` models single-page
+    content (About, Home, Contact): exactly one entry per locale, edited directly with no
+    list or "new entry", localization and versioning still apply. Enforced at the API
+    layer (a second create returns 409) with no extra DDL.
+  - **`kalayaan update`.** Updates a project's Kalayaan dependencies to the latest release
+    (or `--to <version>`): detects the package manager, bumps `kalayaan` + any `@kalayaan/*`
+    packages, installs, and surfaces any pending schema migration so you know when a
+    `migrate` + redeploy is due. Supports `--dry-run`, `--no-install`, and `--yes`.
+
+### Patch Changes
+
+- Updated dependencies [b8f673f]
+  - @kalayaan/config@0.2.0
+  - @kalayaan/adapter-relational@0.2.0
+  - @kalayaan/core@0.2.0
+
 ## 0.1.3
 
 ### Patch Changes

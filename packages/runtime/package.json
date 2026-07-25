@@ -1,6 +1,6 @@
 {
   "name": "@kalayaan/runtime",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "The Hono application powering a Kalayaan site: content API, admin API, auth/RBAC, media, AI, GraphQL, MCP, and public submissions.",
   "homepage": "https://kalayaan.periabyte.dev/",
