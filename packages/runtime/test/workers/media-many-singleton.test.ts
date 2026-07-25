@@ -85,4 +85,5 @@ describe("multi-media fields and singleton collections", () => {
     expect(updated.status).toBe(200);
     expect(((await json(updated)).doc as { heading: string }).heading).toBe("About us, revised");
   });
+
 });

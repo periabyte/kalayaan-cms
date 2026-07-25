@@ -6,6 +6,8 @@ import { authenticate, authHeaders, type AuthedRequest } from "./auth-helper.js"
 
 let auth: AuthedRequest;
 let publishedId: string;
+let authorId: string;
+const MEDIA_ID = "media0000000000000000000001";
 
 beforeAll(async () => {
   const db = (env as unknown as { DB: D1Database }).DB;
@@ -13,12 +15,25 @@ beforeAll(async () => {
   const adapter = new D1Adapter(db, snapshot);
   await adapter.applyMigration(await adapter.planMigration(testDiff(), snapshot, null));
   for (const sql of SYSTEM_TABLE_DDL) await db.prepare(sql).run();
+  // Seed a media row directly (no R2 needed — populate reads the media table).
+  await db
+    .prepare(`INSERT INTO media (id, key, filename, mime, size, alt, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .bind(MEDIA_ID, `media/${MEDIA_ID}/cover.png`, "cover.png", "image/png", 1234, "a cover", Date.now())
+    .run();
   auth = await authenticate();
+
+  authorId = ((await (
+    await SELF.fetch("https://x/admin/api/authors", {
+      method: "POST",
+      headers: authHeaders(auth),
+      body: JSON.stringify({ name: "Ada Lovelace", published_at: Date.now() - 1000 }),
+    })
+  ).json()) as { doc: { id: string } }).doc.id;
 
   const create = await SELF.fetch("https://x/admin/api/posts", {
     method: "POST",
     headers: authHeaders(auth),
-    body: JSON.stringify({ title: "GraphQL Post", published_at: Date.now() - 1000, views: 7 }),
+    body: JSON.stringify({ title: "GraphQL Post", published_at: Date.now() - 1000, views: 7, author: authorId, cover: MEDIA_ID }),
   });
   publishedId = ((await create.json()) as { doc: { id: string } }).doc.id;
 
@@ -62,6 +77,35 @@ describe("GraphQL read API", () => {
     const { data } = await json(await gql(`{ posts { id title } }`));
     const posts = data!.posts as { title: string }[];
     expect(posts.map((p) => p.title)).toEqual(["GraphQL Post"]);
+  });
+
+  it("populates relation + media fields as nested objects (GraphQL and REST parity)", async () => {
+    // GraphQL: relation → nested collection type, media → Media type with a url.
+    const { data } = await json(
+      await gql(`query($id: ID!) { posts_one(id: $id) { title author { id name } cover { id url filename mime } } }`, {
+        id: publishedId,
+      }),
+    );
+    const one = data!.posts_one as {
+      author: { id: string; name: string };
+      cover: { id: string; url: string; filename: string; mime: string };
+    };
+    expect(one.author).toEqual({ id: authorId, name: "Ada Lovelace" });
+    expect(one.cover).toEqual({ id: MEDIA_ID, url: `/media/${MEDIA_ID}`, filename: "cover.png", mime: "image/png" });
+
+    // REST single-doc: same population via ?populate=.
+    const rest = (await (
+      await SELF.fetch(`https://x/api/v1/posts/${publishedId}?populate=author,cover`)
+    ).json()) as { doc: { author: { id: string; name: string }; cover: { id: string; filename: string } } };
+    expect(rest.doc.author.name).toBe("Ada Lovelace");
+    expect(rest.doc.cover.filename).toBe("cover.png");
+
+    // Without populate, the same field is just the id string.
+    const raw = (await (await SELF.fetch(`https://x/api/v1/posts/${publishedId}`)).json()) as {
+      doc: { author: string; cover: string };
+    };
+    expect(raw.doc.author).toBe(authorId);
+    expect(raw.doc.cover).toBe(MEDIA_ID);
   });
 
   it("returns null for a draft/unknown id, not the document", async () => {

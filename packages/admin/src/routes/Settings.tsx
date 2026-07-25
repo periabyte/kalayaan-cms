@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.
 import { useToast } from "../components/toast.js";
 import { useConfirm } from "../components/ConfirmDialog.js";
 import { useCan } from "../lib/permissions.js";
+import { buildApiKeyGrants } from "../lib/api-key-grants.js";
 import type { PermissionAction, PermissionGrant, WebhookEvent } from "../lib/types.js";
 
 type Tab = "users" | "keys" | "webhooks" | "ai";
@@ -412,6 +413,8 @@ const apiKeyFormSchema = z.object({
     .record(z.string(), z.boolean())
     .refine((a) => Object.values(a).some(Boolean), { message: "Select at least one permission" }),
   scopedCollections: z.array(z.string()),
+  /** Grant the Media library subject (upload/list/manage assets via the API/MCP). */
+  media: z.boolean(),
   expiryDays: z.number().nullable(),
 });
 type ApiKeyFormValues = z.infer<typeof apiKeyFormSchema>;
@@ -427,17 +430,18 @@ function ApiKeysPanel({ collections }: { collections: string[] }) {
 
   const form = useForm<ApiKeyFormValues>({
     resolver: zodResolver(apiKeyFormSchema),
-    defaultValues: { name: "", actions: { read: true }, scopedCollections: [], expiryDays: null },
+    defaultValues: { name: "", actions: { read: true }, scopedCollections: [], media: false, expiryDays: null },
   });
 
   const onSubmit = async (values: ApiKeyFormValues) => {
     const selectedActions = KEY_ACTIONS.filter((a) => values.actions[a]);
-    const grant: PermissionGrant = {
-      subjects: values.scopedCollections.length ? values.scopedCollections : "*",
+    const grants = buildApiKeyGrants({
+      collections: values.scopedCollections,
+      media: values.media,
       actions: selectedActions,
-    };
+    });
     const expiresAt = values.expiryDays ? Date.now() + values.expiryDays * 86_400_000 : null;
-    const res = await create.mutateAsync({ name: values.name, grants: [grant], expiresAt });
+    const res = await create.mutateAsync({ name: values.name, grants, expiresAt });
     setRevealed(res.rawKey);
     form.resetField("name");
     toast({ title: "API key created", desc: "Copy it now — it won't be shown again.", kind: "published" });
@@ -586,6 +590,21 @@ function ApiKeysPanel({ collections }: { collections: string[] }) {
                 )}
               />
             )}
+            <FormField
+              control={form.control}
+              name="media"
+              render={({ field }) => (
+                <FormItem className="mb-3">
+                  <div className="text-[12px] font-medium text-muted-foreground mb-1.5">Media library</div>
+                  <FormControl>
+                    <label className="flex items-center gap-1.5 text-[13px] cursor-pointer">
+                      <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(!!checked)} />
+                      Allow uploading &amp; managing media files
+                    </label>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
             <div className="flex items-center gap-3">
               <FormField
                 control={form.control}

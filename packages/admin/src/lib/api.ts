@@ -26,7 +26,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const headers = new Headers(init.headers);
   if (init.body !== undefined && !headers.has("content-type")) headers.set("content-type", "application/json");
   if (!SAFE_METHODS.has(init.method?.toUpperCase())) {
-    const csrfToken = readCookie("edgecms_csrf");
+    const csrfToken = readCookie("kalayaan_csrf");
     if (csrfToken) headers.set("x-csrf-token", csrfToken);
   }
 

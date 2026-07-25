@@ -39,9 +39,9 @@ export function contentRoutes(config: ResolvedConfig) {
     if (!collection || !can(c, "read", name)) throw new EdgeCMSError("not_found", `Unknown collection "${name}"`);
     const idOrSlug = c.req.param("idOrSlug");
     const locale = c.req.query("locale");
-    const ref = looksLikeUlid(idOrSlug)
-      ? { collection: name, id: idOrSlug, ...(locale && { locale }) }
-      : { collection: name, slug: idOrSlug, ...(locale && { locale }) };
+    const populate = c.req.query("populate")?.split(",");
+    const base = { collection: name, ...(locale && { locale }), ...(populate && { populate }) };
+    const ref = looksLikeUlid(idOrSlug) ? { ...base, id: idOrSlug } : { ...base, slug: idOrSlug };
     const doc = await c.var.adapter.findOne(ref);
     if (!doc || doc.published_at === null || (doc.published_at as number) > Date.now())
       throw new EdgeCMSError("not_found", `${name}/${idOrSlug} not found`);

@@ -76,7 +76,7 @@ export abstract class RelationalAdapter implements DatabaseAdapter {
       params,
     );
     if (!rows[0]) return null;
-    const [doc] = await this.hydrate(c, [rows[0]], []);
+    const [doc] = await this.hydrate(c, [rows[0]], ref.populate ?? []);
     return doc ?? null;
   }
 

@@ -110,7 +110,12 @@ export function adminCrudRoutes(config: ResolvedConfig, plugins: PluginHost = ne
 
   app.get("/:collection/:id", requirePermission("read"), async (c) => {
     const collection = mustCollection(c.req.param("collection"));
-    const base = await c.var.adapter.findOne({ collection: collection.name, id: c.req.param("id") });
+    const populate = c.req.query("populate")?.split(",");
+    const base = await c.var.adapter.findOne({
+      collection: collection.name,
+      id: c.req.param("id"),
+      ...(populate && { populate }),
+    });
     if (!base) throw new EdgeCMSError("not_found", `${collection.name}/${c.req.param("id")} not found`);
 
     // `?locale=` loads that locale's own row (a sibling sharing entity_id).
@@ -126,6 +131,7 @@ export function adminCrudRoutes(config: ResolvedConfig, plugins: PluginHost = ne
         where: { entity_id: entityId },
         locale,
         limit: 1,
+        ...(populate && { populate }),
       });
       const variant = page.docs[0];
       return c.json({ doc: variant ? serializeDoc(variant) : null });

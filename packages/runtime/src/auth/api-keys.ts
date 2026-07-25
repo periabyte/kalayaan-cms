@@ -5,7 +5,7 @@ import { randomToken, sha256Hex } from "./tokens.js";
 export interface ApiKeyRecord {
   id: string;
   name: string;
-  /** Public, non-secret prefix shown in the UI, e.g. "ecms_a1b2c3d". */
+  /** Public, non-secret prefix shown in the UI, e.g. "kcms_a1b2c3d". */
   keyPrefix: string;
   grants: PermissionGrant[];
   /** epoch ms; null = never expires. */
@@ -23,7 +23,7 @@ export interface CreateApiKeyInput {
   expiresAt?: number | null;
 }
 
-const KEY_PREFIX = "ecms_";
+const KEY_PREFIX = "kcms_";
 /** Length of the public display prefix (KEY_PREFIX + a few key chars). */
 const PREFIX_DISPLAY_LEN = KEY_PREFIX.length + 7;
 

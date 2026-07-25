@@ -3,7 +3,7 @@ import { secureCookies } from "./secure-cookie.js";
 import type { Context } from "hono";
 import { hmacSign, hmacVerify, randomToken } from "./tokens.js";
 
-const COOKIE_NAME = "edgecms_session";
+const COOKIE_NAME = "kalayaan_session";
 const TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days, sliding
 
 export interface SessionData {

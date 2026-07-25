@@ -4,7 +4,7 @@ import { EdgeCMSError } from "@kalayaan/core";
 import { randomToken } from "./tokens.js";
 import { secureCookies } from "./secure-cookie.js";
 
-const COOKIE_NAME = "edgecms_csrf";
+const COOKIE_NAME = "kalayaan_csrf";
 const HEADER_NAME = "x-csrf-token";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 

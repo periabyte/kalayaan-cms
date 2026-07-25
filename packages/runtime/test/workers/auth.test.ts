@@ -104,7 +104,7 @@ describe("auth", () => {
 
   it("rejects a forged session cookie", async () => {
     const res = await SELF.fetch("https://x/admin/api/posts", {
-      headers: { cookie: "edgecms_session=totally-forged.badsignature" },
+      headers: { cookie: "kalayaan_session=totally-forged.badsignature" },
     });
     expect(res.status).toBe(401);
   });
@@ -120,7 +120,7 @@ describe("auth", () => {
       }),
     );
     const rawKey = readOnly.rawKey as string;
-    expect(rawKey.startsWith("ecms_")).toBe(true);
+    expect(rawKey.startsWith("kcms_")).toBe(true);
 
     const okRead = await SELF.fetch("https://x/admin/api/authors", {
       headers: { authorization: `Bearer ${rawKey}` },
@@ -141,7 +141,7 @@ describe("auth", () => {
     expect(forbiddenWrite.status).toBe(403);
 
     const badKey = await SELF.fetch("https://x/admin/api/authors", {
-      headers: { authorization: "Bearer ecms_not-a-real-key" },
+      headers: { authorization: "Bearer kcms_not-a-real-key" },
     });
     expect(badKey.status).toBe(401);
   });

@@ -135,7 +135,7 @@ export interface SavedFilter {
 export interface ApiKey {
   id: string;
   name: string;
-  /** Public, non-secret display prefix, e.g. "ecms_a1b2c3d". */
+  /** Public, non-secret display prefix, e.g. "kcms_a1b2c3d". */
   keyPrefix: string;
   grants: PermissionGrant[];
   expiresAt: number | null;

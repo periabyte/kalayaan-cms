@@ -48,6 +48,8 @@ export interface DocRef {
   id?: string;
   slug?: string;
   locale?: string;
+  /** Relation/media field names to resolve into nested objects (depth 1). */
+  populate?: string[];
 }
 
 export interface Page {
