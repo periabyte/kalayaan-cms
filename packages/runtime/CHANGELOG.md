@@ -1,5 +1,22 @@
 # @kalayaan/runtime
 
+## 0.3.1
+
+### Patch Changes
+
+- edd2bb7: Redesign the API root (`/`) as a branded, headless splash.
+
+  Browser navigations to `/` now render a single branded page (the "Dawn" theme, with the Cubao Free
+  display face served locally via the Assets binding) with one call-to-action to the project site,
+  instead of listing the Admin / REST / GraphQL / MCP entry points. The page no longer exposes internal
+  route paths; the JSON 404 for non-HTML clients is unchanged.
+  - @kalayaan/adapter-d1@0.3.1
+  - @kalayaan/adapter-mysql@0.3.1
+  - @kalayaan/adapter-postgres@0.3.1
+  - @kalayaan/config@0.3.1
+  - @kalayaan/core@0.3.1
+  - @kalayaan/storage-r2@0.3.1
+
 ## 0.3.0
 
 ### Minor Changes
