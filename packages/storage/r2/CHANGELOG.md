@@ -1,5 +1,12 @@
 # @kalayaan/storage-r2
 
+## 0.3.0
+
+### Patch Changes
+
+- Updated dependencies [038d5b1]
+  - @kalayaan/core@0.3.0
+
 ## 0.2.0
 
 ### Patch Changes

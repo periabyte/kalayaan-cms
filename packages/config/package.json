@@ -1,6 +1,6 @@
 {
   "name": "@kalayaan/config",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "description": "Kalayaan config: defineConfig/collection/field builders, Zod validation, roles & permissions, schema snapshots and diffing.",
   "homepage": "https://kalayaan.periabyte.dev/",

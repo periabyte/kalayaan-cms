@@ -1,6 +1,6 @@
 {
   "name": "@kalayaan/storage-r2",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "description": "Cloudflare R2 media storage adapter for Kalayaan.",
   "homepage": "https://kalayaan.periabyte.dev/",

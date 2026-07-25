@@ -1,5 +1,12 @@
 # kalayaan-example-blog
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [038d5b1]
+  - kalayaan@0.3.0
+
 ## 0.0.5
 
 ### Patch Changes
