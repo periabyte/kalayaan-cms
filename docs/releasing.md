@@ -19,8 +19,10 @@ release has a bootstrapping step:
    npm trust github <package> --repo periabyte/kalayaan-cms --file release.yml --allow-publish
    ```
    Each call opens a browser to approve via OIDC/2FA; check status any time with
-   `npm trust list <package>`. `@kalayaan/admin` is skipped — it's `private: true` and never
-   published.
+   `npm trust list <package>`. `kalayaan-skill` is skipped — it's `private: true` and never
+   published (so `changeset publish` doesn't try to). Every other `@kalayaan/*` package,
+   including `@kalayaan/admin` (the admin SPA, shipped as a package so the CLI can serve it as
+   Workers Assets), is published.
 3. Make sure `main` is the default branch and has a git remote (`git remote -v`).
 
 ## Every release

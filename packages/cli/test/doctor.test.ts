@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runDoctor } from "../src/commands/doctor.js";
 
 let dir: string;
+let home: string;
+let originalHome: string | undefined;
+let originalUserProfile: string | undefined;
 
 const CONFIG_TS = `
 import { defineConfig, collection, field } from "kalayaan";
@@ -16,10 +19,23 @@ export default defineConfig({
 
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), "kalayaan-doctor-"));
+  // Isolate the home dir so a real `~/.kalayaan/credentials.json` (from an actual
+  // `kalayaan login` on the dev's machine) can't leak in and make the
+  // missing-credentials assertion non-deterministic. homedir() honors these.
+  home = await mkdtemp(join(tmpdir(), "kalayaan-home-"));
+  originalHome = process.env.HOME;
+  originalUserProfile = process.env.USERPROFILE;
+  process.env.HOME = home;
+  process.env.USERPROFILE = home;
 });
 
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
+  await rm(home, { recursive: true, force: true });
+  if (originalHome === undefined) delete process.env.HOME;
+  else process.env.HOME = originalHome;
+  if (originalUserProfile === undefined) delete process.env.USERPROFILE;
+  else process.env.USERPROFILE = originalUserProfile;
   delete process.env.EDGE_API_TOKEN;
   delete process.env.EDGE_ACCOUNT_ID;
 });
