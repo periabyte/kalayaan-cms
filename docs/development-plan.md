@@ -4,15 +4,26 @@
 > planning workspace; this file is the version-controlled reference. Read the **Status** section
 > first — it names what's actually built and what's next.
 
-## Status (updated 2026-07-21)
+## Status (updated 2026-07-26)
 
-**All five phases have landed, plus a full access-control + onboarding layer, and the admin UI now
-runs on real shadcn/ui + react-hook-form (not a hand-rolled facsimile).** Phase 1 (Core) is merged
-on `main`. Everything since — Phases 2–5, the admin redesign, and this session's work — lives on
-branch **`feat/admin-dashboard-redesign`** (NOT yet merged to `main`, **no git remote configured**,
-working tree has further uncommitted changes from this session). Repo root stays green:
-`pnpm build && pnpm typecheck && pnpm test` — 26 turbo test tasks, all passing. The monorepo is
-**16 packages**.
+**All five phases have landed, plus a full access-control + onboarding layer; the admin UI runs on
+real shadcn/ui + react-hook-form; and the project now ships to npm.** Everything is **merged to
+`main`** in the repo **`github.com/periabyte/kalayaan-cms`**. **CI is green** on `main`
+(`.github/workflows/ci.yml`), the **docs site is live** at `kalayaan.periabyte.dev`
+(`.github/workflows/docs.yml`), and the packages are **published to npm** — latest release
+**v0.3.1** (2026-07-26), cut via changesets and published by `.github/workflows/release.yml` using
+npm **OIDC trusted publishing** (no `NPM_TOKEN`). Release flow is documented in `docs/releasing.md`.
+Repo root stays green: `pnpm build && pnpm typecheck && pnpm test`.
+
+**The open backlog now lives in a single place:** the **[Roadmap](../docs-site/src/content/docs/roadmap.md)**
+page in the docs site (`kalayaan.periabyte.dev/roadmap`). Treat that page as the source of truth for
+what's *not* built; the per-phase notes below record what *is*.
+
+> The dated subsections further down (2026-07-21 and earlier) are retained as a historical build log.
+> Where they conflict with this header or the per-phase summary below, **this header wins** — e.g.
+> "no git remote / unmerged branch / CI never run / NPM_TOKEN-gated / no docs site" are all now
+> obsolete, and several items they list as gaps (single-doc `populate`, MT-review write path,
+> per-locale editing, custom-field-type enforcement, the eight-item live-testing punch list) are done.
 
 ### This session (2026-07-21, cont'd): admin UI → shadcn/ui + react-hook-form, CI credential env rename
 
@@ -87,37 +98,40 @@ the free path free, and reduces setup friction for one person shipping a site.
 
 ### What's built, by phase
 
+*(Verified against the code on `main`, 2026-07-26. Open items link to the [Roadmap](../docs-site/src/content/docs/roadmap.md).)*
+
 - **Phase 1 (Core): ✅ complete & merged.** Config, core contracts, D1 adapter, runtime CRUD,
   auth, R2 media, admin shell, CLI (init/dev/migrate/deploy/doctor), examples/blog.
-- **Phase 2 (Editorial depth): mostly done (on branch).** Drafts/publish/versioning (`_versions`
-  history + restore), webhooks (HMAC, fire-and-forget via `waitUntil`), per-user saved filters,
-  derived `publishStatus`. **Searchable relation combobox (§3 item 2 UI) done this session.**
-  *Gaps:* single-doc content route doesn't `populate` (list route does); no image transforms
-  (`/cdn-cgi/image`); no presigned R2 uploads; webhooks have no real Queue binding/DLQ; MT-review
-  write path, true per-locale editing, and Preview are stubs/incomplete.
-- **Phase 3 (Adapters): done (on branch), external-DB is content-plane only.** Extracted a
-  `SqlDialect` abstraction from D1's SQLite specifics (identifier/literal quoting, `?`→engine
-  placeholder rendering, boolean/param encoding, LIKE op, `timestampType`, `idType`, ALTER-vs-
-  copy-rename). New `@kalayaan/adapter-postgres`, `@kalayaan/adapter-mysql` (both over minimal
-  `PgClient`/`MysqlClient` interfaces with lazy driver imports), `@kalayaan/storage-s3` (aws4fetch,
-  injected signed-fetch). CLI provisions Hyperdrive + Vectorize; `migration.ts` is dialect-aware;
-  runtime selects the adapter per config via an injected factory (see gotchas). Golden DDL tests
-  run offline; full conformance is **gated behind `EDGECMS_PG_URL`/`EDGECMS_MYSQL_URL`** (needs
-  dockerized DBs — the P3 gate). *Deferred:* MongoDB adapter (untouched); the runtime system-table
-  stores (auth/media/versions) are still D1-bound, so a full CMS can't yet run on Postgres/MySQL.
-- **Phase 4 (AI): semantic search done (on branch).** `AIProvider.embed` (bge-m3, 1024-dim),
+- **Phase 2 (Editorial depth): mostly done.** Drafts/publish/versioning (`_versions` history +
+  restore), webhooks (HMAC), per-user saved filters, derived `publishStatus`, searchable relation
+  combobox. **Now done (were gaps):** single-doc content route `?populate=` (parity with the list
+  route), the **MT-review write path** (`?review=mt` persists an `mt-review` version), and **true
+  per-locale editing** (sibling-variant resolve by `entity_id`; editor loads/saves/publishes each
+  locale independently). *Still open:* image transforms (`/cdn-cgi/image`); presigned R2 uploads
+  (still worker-proxied); webhook delivery is still fire-and-forget `waitUntil` (no Queue/retries/
+  DLQ); **Preview is a stub** (button only toasts).
+- **Phase 3 (Adapters): done, external-DB is content-plane only.** `SqlDialect` abstraction extracted
+  from D1's SQLite specifics; `@kalayaan/adapter-postgres`, `@kalayaan/adapter-mysql` (minimal
+  `PgClient`/`MysqlClient` interfaces, lazy driver imports), `@kalayaan/storage-s3` (aws4fetch). CLI
+  provisions Hyperdrive + Vectorize; `migration.ts` is dialect-aware; runtime selects the adapter per
+  config via an injected factory. Golden DDL tests run offline; full conformance is **gated behind
+  `EDGECMS_PG_URL`/`EDGECMS_MYSQL_URL`** (dockerized DBs — the P3 gate, still unmet in CI). *Deferred:*
+  MongoDB adapter (untouched); runtime system stores (auth/media/versions) are still D1-bound, so a
+  full CMS can't yet run on Postgres/MySQL.
+- **Phase 4 (AI): semantic search done.** `AIProvider.embed` (bge-m3, 1024-dim),
   `SearchIndex`/`VectorizeSearchIndex`, embed-on-publish, public `/api/v1/search` with a SQL
-  `contains` fallback. alt-text/improve/translate routes existed already. *Gaps:* alt-text is
-  synchronous (not the planned Queue job with accept/reject chips); no AI Gateway routing; no
-  backfill/chunking for search.
-- **Phase 5 (Distribution): done (on branch).** Plugin lifecycle hooks + custom field-type
-  *registry* (`PluginHost`, wired into admin-crud); config-generated **GraphQL** read API behind a
-  flag; **MCP** server at `/mcp` (JSON-RPC, API-key-scoped tools); **Cloudflare Access** auth mode
-  (RS256 JWKS verify → user); `kalayaan-skill` package; `actions/deploy` GitHub Action; init
-  templates (blog/portfolio/docs/blank, inline in the CLI). *Gaps:* GraphQL read-only (no
-  mutations, relations return ids); MCP single-response (no SSE); Access not wired through
-  `init`/`deploy`; custom field types declarable but not enforced in validation/DDL; no docs site
-  or Deploy-to-Cloudflare button.
+  `contains` fallback; alt-text/improve/translate/summarize/seo routes. *Still open:* alt-text runs
+  async via `waitUntil` but is **not** a Queue job with accept/reject chips (auto-applied); **no AI
+  Gateway routing**; search has **no chunking and no backfill/reindex** of existing docs (embed-on-
+  publish only).
+- **Phase 5 (Distribution): done.** Plugin lifecycle hooks + custom field-type registry
+  (`PluginHost`) — **custom field types are now enforced in both write validation AND DDL** across
+  all three dialects (was a gap); config-generated **GraphQL** read API behind a flag (relation/media
+  fields resolve to nested objects); **MCP** server at `/mcp` (JSON-RPC, API-key-scoped tools);
+  **Cloudflare Access** auth mode (RS256 JWKS verify → user); `kalayaan-skill` package;
+  `actions/deploy` GitHub Action; init templates; **docs site live**. *Still open:* GraphQL is
+  read-only (no mutations); MCP is single-response (no SSE/streaming); **Access is runtime-only, not
+  wired through `init`/`deploy`**; no Deploy-to-Cloudflare button.
 
 ### Admin UI redesign + this session's polish (on branch, uncommitted working tree)
 
@@ -137,27 +151,24 @@ Committed on the branch: all P3/P4/P5 backend work + the two CF-runtime bug fixe
 session's admin/auth changes (mobile, TipTap, tag cloud, `--host`, Secure-cookie fix, editor
 write-body fix). Nothing is merged to `main`; **CI has never run**.
 
-### P1 real-account gate: MET (2026-07-21)
+### P1 real-account gate: MET (2026-07-21); live-testing punch list: ALL FIXED (verified 2026-07-26)
 
 User ran `kalayaan login` → `deploy` → `down` end-to-end against a real Cloudflare account — the
 plan's core promise (a live site from `cms.config.ts` + a token) is now proven, not just covered by
-mocked-API tests. Driving the deployed admin UI surfaced eight open bugs/UX gaps (none fixed yet):
+mocked-API tests. Driving the deployed admin UI surfaced eight bugs/UX gaps; **all eight are now
+fixed in the code on `main`** (verified 2026-07-26):
 
-1. Author field doesn't default to the current logged-in user.
-2. No way to add/manage a user's display name.
-3. A relation/select dropdown still renders as a plain HTML `<select>` instead of the shadcn
-   `Select` — inconsistent with the rest of the migrated admin UI.
-4. Inviting a user doesn't send a random password.
-5. `PATCH /api/media` 404s after generating an AI caption.
-6. Viewing media opens a new browser tab/window instead of an in-page lightbox.
-7. Creating a tag inline while authoring a post, then publishing the post, leaves the
-   inline-created tag as draft instead of publishing it too.
-8. AI tools in the sidebar are ambiguous about which field/part of the form they act on — proposed
-   direction: attach AI actions per-field (`{ aiEnrich: true, dependency: <field> }`) instead of a
-   global panel.
+1. ✅ Author field defaults to the current logged-in user (`DocumentEditor.tsx`).
+2. ✅ User display name is manageable (`ManagedUser.name`, users API + Settings UI).
+3. ✅ The stray plain HTML `<select>` is gone — relations/selects use the shadcn `Select` (the
+   legacy native one in `components/ui.tsx` is now dead code, imported nowhere).
+4. ✅ Inviting a user sends a random temporary password (`randomPassword()` in `admin-users.ts`).
+5. ✅ `PATCH /admin/api/media/:id` route exists and the admin calls the correct path.
+6. ✅ Viewing media opens an in-page lightbox (shadcn `Dialog` in `MediaLibrary.tsx`).
+7. ✅ Inline-created tags publish with the post (`published_at` set on inline create in `relation.tsx`).
+8. ✅ AI actions are per-field via `aiEnrich: { action, dependency }`, replacing the ambiguous global panel.
 
-Consistent with the standing lesson below: found only by real use, not the green test suite. This
-punch list is next up, before further phase-3+ breadth.
+Consistent with the standing lesson below: found only by real use, not the green test suite.
 
 ### Plan phase-gates still unmet (all need a real Cloudflare account — see §7)
 
@@ -178,17 +189,14 @@ sending only writable fields; plus the TipTap editor never displayed existing co
 reads `content` once, doc loads async) — fixed with a content-sync effect. **Lesson holds: drive
 the CLI-scaffolded project under real `wrangler dev`, not just the green suite.**
 
-**Recommended next up (as of 2026-07-21):** consolidation is done (working tree clean; all session
-work committed), the P1 real-account deploy gate is met, and the eight-item live-testing punch
-list is fixed (see `kalayaan-live-testing-bugs` — not yet re-verified live). **Release pipeline
-scaffolded:** `.github/workflows/release.yml` (publish on GitHub Release, gated on `NPM_TOKEN`) +
-`docs/releasing.md` are in place; `ci.yml` already existed but has never run. Still needed before
-either fires: **(1)** create the GitHub repo + add the remote + push (`main` currently only has
-Phase 1 — decide whether to merge `feat/admin-dashboard-redesign` in first); **(2)** create the
-`@kalayaan`/`kalayaan` npm org access + an automation token as the `NPM_TOKEN` repo secret (both
-names confirmed unclaimed on npm as of this check). After that: **(3)** docs site +
-Deploy-to-Cloudflare button (P5 gap) + the marketing/About pages; **(4)** the external-DB
-control-plane gap (auth/media/versions stores are D1-bound) or MongoDB, per priority.
+**Recommended next up (as of 2026-07-26):** the release pipeline is fully live — merged to `main`,
+CI green, docs site deployed, and packages published to npm at **v0.3.1** via OIDC trusted publishing
+(the earlier `NPM_TOKEN` scaffolding was replaced). The remaining work is now tracked on the
+**[Roadmap](../docs-site/src/content/docs/roadmap.md)** page; the highest-leverage items against the
+free-self-hosting north star are: image transforms + presigned uploads (Phase 2), the external-DB
+control-plane gap so a full CMS can run off D1 (Phase 3), and wiring **Cloudflare Access through
+`init`/`deploy`** (Phase 5). The three remaining phase gates (P3 conformance in CI, P4 nightly AI
+smoke, P5 scripted-skill deploy) each still need a dedicated CI job.
 
 ## Context
 

@@ -48,6 +48,7 @@ export default defineConfig({
             { label: "Deployment", slug: "guides/deployment" },
           ],
         },
+        { label: "Roadmap", slug: "roadmap" },
       ],
     }),
   ],
