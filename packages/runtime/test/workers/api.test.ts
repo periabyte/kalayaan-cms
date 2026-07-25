@@ -142,7 +142,8 @@ describe("runtime API", () => {
     const schema = await json(res);
     expect(schema.name).toBe("test-site");
     const collections = schema.collections as { name: string }[];
-    expect(collections.map((c) => c.name)).toEqual(["posts", "authors", "pages"]);
+    expect(collections.map((c) => c.name)).toEqual(["posts", "authors", "about", "pages"]);
+    expect(collections.find((c) => c.name === "about")).toMatchObject({ singleton: true });
   });
 
   it("returns the shared error body shape for unknown collections", async () => {

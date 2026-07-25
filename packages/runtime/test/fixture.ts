@@ -24,9 +24,16 @@ export function testConfig(): EdgeCMSConfig {
           author: field.relation("authors"),
           status: field.select(["draft", "published"], { default: "draft" }),
           views: field.number({ integer: true, default: 0 }),
+          cover: field.media({ accept: ["image"] }),
+          gallery: field.media({ many: true }),
         },
       }),
       collection("authors", { fields: { name: field.text({ required: true }) } }),
+      // Single-page (singleton) collection: exactly one entry, edited directly.
+      collection("about", {
+        singleton: true,
+        fields: { heading: field.text({ required: true }), body: field.richText() },
+      }),
       // Localized collection with a plugin-contributed custom field type,
       // exercising per-locale editing, the mt-review write path, and custom
       // field validation. The `hex` validator is registered in worker.ts.

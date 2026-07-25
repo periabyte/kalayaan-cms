@@ -7,6 +7,7 @@ import { runMigrate } from "./commands/migrate.js";
 import { runDeploy } from "./commands/deploy.js";
 import { runInit, type DatabaseChoice, type Template } from "./commands/init.js";
 import { runDoctor } from "./commands/doctor.js";
+import { runUpdate } from "./commands/update.js";
 import { runDown } from "./commands/down.js";
 import { runLogin } from "./commands/login.js";
 import { runLogout } from "./commands/logout.js";
@@ -217,6 +218,65 @@ program
       console.log(`${icon} ${check.name}: ${check.message}`);
     }
     if (checks.some((c) => c.status === "fail")) process.exitCode = 1;
+  });
+
+program
+  .command("update")
+  .description("Update this project's Kalayaan dependencies to the latest release")
+  .option("--to <version>", "target a specific version instead of the latest")
+  .option("--dry-run", "show what would change without modifying anything")
+  .option("--no-install", "edit package.json but skip the package-manager install")
+  .option("--yes", "skip the confirmation prompt (for CI and agents)")
+  .action(async (options: { to?: string; dryRun?: boolean; install?: boolean; yes?: boolean }) => {
+    const projectDir = process.cwd();
+
+    // Preview first so we can show the plan and confirm before writing anything.
+    const preview = await runUpdate({
+      projectDir,
+      dryRun: true,
+      ...(options.to && { to: options.to }),
+    });
+
+    if (!preview.changed) {
+      console.log(`Already on Kalayaan ${preview.targetVersion} — nothing to update.`);
+      return;
+    }
+
+    const label = preview.installedVersion ?? "not installed";
+    console.log(`Update Kalayaan: ${label} → ${preview.targetVersion}`);
+    for (const u of preview.updates) console.log(`  • ${u.name}: ${u.from} → ${u.to}`);
+    if (options.dryRun) return;
+
+    if (!options.yes) {
+      if (!process.stdin.isTTY) {
+        console.error("Refusing to update without --yes on a non-interactive terminal.");
+        process.exitCode = 1;
+        return;
+      }
+      const ok = await p.confirm({ message: `Update to ${preview.targetVersion} and install?`, initialValue: true });
+      if (p.isCancel(ok) || !ok) {
+        p.cancel("Aborted — nothing was changed.");
+        return;
+      }
+    }
+
+    const result = await runUpdate({
+      projectDir,
+      to: preview.targetVersion,
+      ...(options.install === false && { install: false }),
+    });
+
+    if (result.installed) console.log(`\n✓ Installed Kalayaan ${result.targetVersion} with ${result.packageManager}.`);
+    else console.log(`\n✓ Updated package.json to Kalayaan ${result.targetVersion}. Run \`${result.packageManager} install\`.`);
+
+    if (result.pendingMigration && result.pendingMigration.statements > 0) {
+      const d = result.pendingMigration.destructive ? " (includes destructive changes)" : "";
+      console.log(
+        `\n⚠ ${result.pendingMigration.statements} pending schema change(s)${d}.\n  Next: kalayaan migrate${result.pendingMigration.destructive ? " --allow-destructive" : ""}  →  kalayaan deploy`,
+      );
+    } else {
+      console.log("\nNext: redeploy with `kalayaan deploy` to run the new version.");
+    }
   });
 
 program.parseAsync(process.argv).catch((err: unknown) => {

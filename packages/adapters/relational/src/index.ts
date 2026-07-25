@@ -5,7 +5,16 @@ export {
   decodeCursor,
   type CompiledQuery,
 } from "./query-builder.js";
-export { columnName, joinTableName, isLocalized, findField, fieldDef, q } from "./naming.js";
+export {
+  columnName,
+  joinTableName,
+  isManyField,
+  joinTargetOf,
+  isLocalized,
+  findField,
+  fieldDef,
+  q,
+} from "./naming.js";
 export {
   emitDDL,
   createCollection,

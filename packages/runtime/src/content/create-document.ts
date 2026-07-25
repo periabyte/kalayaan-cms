@@ -43,6 +43,7 @@ export async function createDocument(
 ): Promise<Doc> {
   const { config, plugins } = deps;
   const { collection, actor } = input;
+  await enforceSingleton(c, collection, input.data);
   const data = applyCustomFieldTypes(plugins, collection, input.data);
   const body = await plugins.beforeChange({
     collection: collection.name,
@@ -59,6 +60,33 @@ export async function createDocument(
   await plugins.afterChange(hookCtx);
   if (computeStatus(doc) === "published") await plugins.afterPublish(hookCtx);
   return doc;
+}
+
+/**
+ * A singleton collection holds exactly one entry per locale (About/Home/Contact).
+ * Reject a second create for a locale that already has one — the caller should
+ * update the existing entry instead. Enforced here so the API is as protected as
+ * the admin UI.
+ */
+async function enforceSingleton(
+  c: WriteCtx,
+  collection: ResolvedCollection,
+  data: Record<string, unknown>,
+): Promise<void> {
+  if (!collection.singleton) return;
+  const localized = collection.locales.length > 0;
+  const locale = localized ? ((data.locale as string | undefined) ?? collection.locales[0]) : undefined;
+  const existing = await c.var.adapter.find({
+    collection: collection.name,
+    limit: 1,
+    ...(locale !== undefined && { locale }),
+  });
+  if (existing.docs.length > 0) {
+    throw new EdgeCMSError(
+      "conflict",
+      `"${collection.name}" is a single-page collection and already has an entry${locale ? ` for locale "${locale}"` : ""}. Edit the existing entry instead of creating a new one.`,
+    );
+  }
 }
 
 /**

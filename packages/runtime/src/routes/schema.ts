@@ -28,6 +28,7 @@ export function schemaRoute(config: ResolvedConfig, customFieldTypes: string[] =
         titleField: c2.titleField,
         versioning: c2.versioning,
         locales: c2.locales,
+        singleton: c2.singleton,
         fields: c2.fields.map((f) => ({ name: f.name, ...f.def })),
       })),
     }),

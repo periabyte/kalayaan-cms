@@ -72,8 +72,9 @@ function buildDocSchema(fields: SchemaField[]) {
         s = required ? z.number({ message: "Required" }) : z.number().optional();
         break;
       case "media":
-        // Nullable per `writableBody`'s nullable-field set.
-        s = z.string().nullable().optional();
+        // Single is nullable per `writableBody`'s nullable-field set; many is an
+        // ordered array of ids, mirroring many-relation.
+        s = f.many ? z.array(z.string()).optional() : z.string().nullable().optional();
         break;
       case "relation":
         s = f.many ? z.array(z.string()).optional() : z.string().nullable().optional();
@@ -90,8 +91,15 @@ function buildDocSchema(fields: SchemaField[]) {
   return z.object(shape).passthrough();
 }
 
-export function DocumentEditor() {
-  const { collection = "", id } = useParams();
+export function DocumentEditor({
+  docId,
+  singleton = false,
+}: { docId?: string; singleton?: boolean } = {}) {
+  const params = useParams();
+  const collection = params.collection ?? "";
+  // Singletons are rendered without an `:id` route param — the wrapper resolves
+  // the sole entry's id and passes it in (or "new" when none exists yet).
+  const id = docId ?? params.id;
   const isNew = id === "new" || id === undefined;
   const navigate = useNavigate();
   const toast = useToast();
@@ -238,7 +246,9 @@ export function DocumentEditor() {
   function writableBody(values: Record<string, unknown>, extra?: Record<string, unknown>): Record<string, unknown> {
     if (!def) return { ...extra };
     const nullable = new Set(
-      def.fields.filter((f) => f.type === "media" || (f.type === "relation" && !f.many)).map((f) => f.name),
+      def.fields
+        .filter((f) => (f.type === "media" || f.type === "relation") && !f.many)
+        .map((f) => f.name),
     );
     const out: Record<string, unknown> = {};
     for (const f of def.fields) {
@@ -256,7 +266,7 @@ export function DocumentEditor() {
     const body = writableBody(form.getValues(), extra);
     if (isCreating) {
       const created = await create.mutateAsync({ body });
-      if (isNew) navigate(`/${collection}/${created.id}`, { replace: true });
+      if (isNew && !singleton) navigate(`/${collection}/${created.id}`, { replace: true });
       else {
         // A new locale variant was created — adopt it so further edits update it.
         form.reset(created);
@@ -374,16 +384,20 @@ export function DocumentEditor() {
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <header className="h-14 flex-shrink-0 flex items-center gap-2 sm:gap-3 px-4 sm:px-5 border-b border-border">
-        <button
-          onClick={() => navigate(`/${collection}`)}
-          className="w-8 h-8 flex-shrink-0 rounded-lg border border-border bg-card text-muted-foreground flex items-center justify-center hover:bg-accent hover:text-foreground"
-        >
-          <ChevronLeft size={16} />
-        </button>
+        {!singleton && (
+          <button
+            onClick={() => navigate(`/${collection}`)}
+            className="w-8 h-8 flex-shrink-0 rounded-lg border border-border bg-card text-muted-foreground flex items-center justify-center hover:bg-accent hover:text-foreground"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-[13px] text-muted-foreground hidden sm:inline">{def.name}</span>
-          <ChevronRight size={14} className="text-subtle-foreground hidden sm:inline" />
-          <span className="text-sm font-semibold truncate max-w-[130px] sm:max-w-[340px]">{isNew ? "New entry" : title}</span>
+          {!singleton && <ChevronRight size={14} className="text-subtle-foreground hidden sm:inline" />}
+          {!singleton && (
+            <span className="text-sm font-semibold truncate max-w-[130px] sm:max-w-[340px]">{isNew ? "New entry" : title}</span>
+          )}
           <StatusBadge status={publishStatus} mt={values.mt as boolean | undefined} />
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -602,7 +616,7 @@ export function DocumentEditor() {
             {/* version history */}
             {versionsEnabled && <VersionHistory collection={collection} id={id!} />}
 
-            {!isNew && (
+            {!isNew && !singleton && (
               <Button variant="destructive" className="w-full h-9" onClick={askDelete}>
                 <Trash2 size={14} />
                 Delete entry

@@ -6,6 +6,7 @@ import type {
   SnapshotField,
 } from "@kalayaan/config";
 import { isDestructive } from "@kalayaan/config";
+import { isManyField, joinTargetOf } from "./naming.js";
 
 export interface SqlStatement {
   sql: string;
@@ -125,7 +126,7 @@ export function emitDDL(
         const prevCollection = prevOf(change.collection);
         const dropped = prevCollection?.fields.find((f) => f.name === change.field);
         const droppedDef = dropped ? fieldDef(dropped) : null;
-        const wasMany = droppedDef?.type === "relation" && droppedDef.many;
+        const wasMany = droppedDef ? isManyField(droppedDef) : false;
         if (wasMany) {
           statements.push({ sql: `DROP TABLE ${join(change.collection, change.field)};`, destructive });
         } else if (dialect.supportsAlterColumn && dropped) {
@@ -145,8 +146,8 @@ export function emitDDL(
       case "alter_field": {
         if (rebuilt.has(change.collection)) break;
         const collection = mustFind(next, change.collection);
-        const beforeMany = change.before.def.type === "relation" && change.before.def.many;
-        const afterMany = change.after.def.type === "relation" && change.after.def.many;
+        const beforeMany = isManyField(fieldDef(change.before));
+        const afterMany = isManyField(fieldDef(change.after));
         if (beforeMany && !afterMany) {
           statements.push({
             sql: `DROP TABLE IF EXISTS ${join(change.collection, change.after.name)};`,
@@ -154,9 +155,13 @@ export function emitDDL(
           });
         }
         if (afterMany && !beforeMany) {
-          const def = change.after.def as unknown as Extract<FieldDef, { type: "relation" }>;
           statements.push({
-            sql: createJoinTable(dialect, change.collection, change.after.name, def.to),
+            sql: createJoinTable(
+              dialect,
+              change.collection,
+              change.after.name,
+              joinTargetOf(fieldDef(change.after)),
+            ),
             destructive,
           });
         }
@@ -212,8 +217,8 @@ export function createCollection(dialect: SqlDialect, c: SnapshotCollection): st
   const statements = [createTable(dialect, c, c.name)];
   for (const f of c.fields) {
     const def = fieldDef(f);
-    if (def.type === "relation" && def.many)
-      statements.push(createJoinTable(dialect, c.name, f.name, def.to));
+    if (isManyField(def))
+      statements.push(createJoinTable(dialect, c.name, f.name, joinTargetOf(def)));
   }
   statements.push(...createIndexes(dialect, c, c.name));
   return statements;
@@ -252,7 +257,7 @@ function createIndexes(dialect: SqlDialect, c: SnapshotCollection, tableName: st
       const cols = localized ? `${q(columnNameFor(f))}, ${q("locale")}` : q(columnNameFor(f));
       out.push(`CREATE UNIQUE INDEX ${q(`ux_${c.name}_${f.name}`)} ON ${q(tableName)} (${cols});`);
     }
-    if ((def.type === "relation" && !def.many) || def.type === "media") {
+    if (!isManyField(def) && (def.type === "relation" || def.type === "media")) {
       out.push(
         `CREATE INDEX ${q(`idx_${c.name}_${f.name}`)} ON ${q(tableName)} (${q(columnNameFor(f))});`,
       );
@@ -264,7 +269,7 @@ function createIndexes(dialect: SqlDialect, c: SnapshotCollection, tableName: st
 function addField(dialect: SqlDialect, c: SnapshotCollection, f: SnapshotField): string[] {
   const q = (id: string) => dialect.quoteId(id);
   const def = fieldDef(f);
-  if (def.type === "relation" && def.many) return [createJoinTable(dialect, c.name, f.name, def.to)];
+  if (isManyField(def)) return [createJoinTable(dialect, c.name, f.name, joinTargetOf(def))];
   const col = dialect.columnDefinition(f, { freshTable: false });
   if (!col) return [];
   const out = [`ALTER TABLE ${q(c.name)} ADD COLUMN ${col};`];
@@ -273,7 +278,7 @@ function addField(dialect: SqlDialect, c: SnapshotCollection, f: SnapshotField):
     const cols = localized ? `${q(columnNameFor(f))}, ${q("locale")}` : q(columnNameFor(f));
     out.push(`CREATE UNIQUE INDEX ${q(`ux_${c.name}_${f.name}`)} ON ${q(c.name)} (${cols});`);
   }
-  if ((def.type === "relation" && !def.many) || def.type === "media") {
+  if (!isManyField(def) && (def.type === "relation" || def.type === "media")) {
     out.push(
       `CREATE INDEX ${q(`idx_${c.name}_${f.name}`)} ON ${q(c.name)} (${q(columnNameFor(f))});`,
     );
@@ -319,7 +324,7 @@ function alterColumn(
   after: SnapshotField,
 ): string[] {
   const q = (id: string) => dialect.quoteId(id);
-  const beforeMany = fieldDef(before).type === "relation" && (fieldDef(before) as { many?: boolean }).many;
+  const beforeMany = isManyField(fieldDef(before));
   const out: string[] = [];
   // Column added where none existed (single-relation gained from a many-relation).
   if (beforeMany && dialect.columnDefinition(after, { freshTable: false })) {
@@ -365,7 +370,7 @@ function tableColumns(c: SnapshotCollection): string[] {
   if (c.locales.length > 0) cols.push("entity_id", "locale");
   for (const f of c.fields) {
     const def = fieldDef(f);
-    if (!(def.type === "relation" && def.many)) cols.push(columnNameFor(f));
+    if (!isManyField(def)) cols.push(columnNameFor(f));
   }
   cols.push("created_at", "updated_at", "published_at");
   return cols;
@@ -391,7 +396,7 @@ function createJoinTable(
 
 function columnAffecting(f: SnapshotField): boolean {
   const def = fieldDef(f);
-  return !(def.type === "relation" && def.many);
+  return !isManyField(def);
 }
 
 function mustFind(snapshot: SchemaSnapshot, name: string): SnapshotCollection {

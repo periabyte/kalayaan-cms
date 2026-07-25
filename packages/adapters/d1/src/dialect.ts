@@ -49,6 +49,7 @@ export const sqliteDialect: SqlDialect = {
       case "custom":
         return `${name} TEXT`;
       case "media":
+        if (def.many) return null;
         return `${name} TEXT REFERENCES ${q("media")}(${q("id")}) ON DELETE SET NULL`;
       case "relation": {
         if (def.many) return null;

@@ -41,9 +41,11 @@ function outputType(collectionField: { def: { type: string; integer?: boolean; m
     case "custom":
       return JSONScalar;
     case "relation":
+    case "media":
+      // A single media/relation is an id string; `many` is an ordered id list.
       return def.many ? new GraphQLList(new GraphQLNonNull(GraphQLString)) : GraphQLString;
     default:
-      // text, slug, select, media (id string)
+      // text, slug, select
       return GraphQLString;
   }
 }

@@ -21,6 +21,8 @@ export interface SchemaCollection {
   titleField: string | null;
   versioning: boolean;
   locales: string[];
+  /** Single-page collection: one entry per locale, edited directly (no list). */
+  singleton?: boolean;
   fields: SchemaField[];
 }
 

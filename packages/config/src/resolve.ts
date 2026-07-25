@@ -60,7 +60,12 @@ const fieldSchema: z.ZodType<FieldDef> = z.discriminatedUnion("type", [
     unique: z.boolean().optional(),
   }),
   z.strictObject({ ...baseField, type: z.literal("richText") }),
-  z.strictObject({ ...baseField, type: z.literal("media") }),
+  z.strictObject({
+    ...baseField,
+    type: z.literal("media"),
+    many: z.boolean().optional(),
+    accept: z.array(z.enum(["image", "video", "file"])).nonempty().optional(),
+  }),
   z.strictObject({
     ...baseField,
     type: z.literal("relation"),
@@ -119,6 +124,7 @@ const collectionSchema = z.strictObject({
   localization: z.array(z.string().regex(LOCALE_RE, "locales look like 'en' or 'en-US'")).optional(),
   hooks: hooksSchema.optional(),
   titleField: z.string().optional(),
+  singleton: z.boolean().optional(),
 });
 
 export const configSchema = z.strictObject({
@@ -307,5 +313,6 @@ function resolveCollection(c: CollectionDef): ResolvedCollection {
       afterPublish: [...(c.hooks?.afterPublish ?? [])],
     },
     titleField: c.titleField ?? firstText,
+    singleton: c.singleton ?? false,
   };
 }

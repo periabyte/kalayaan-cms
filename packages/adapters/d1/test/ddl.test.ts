@@ -50,6 +50,41 @@ describe("emitDDL golden output", () => {
     expect(statements[0]).toContain(`CREATE TABLE "authors_interests"`);
   });
 
+  it("adding a many-media field only creates a join table referencing media", () => {
+    const next = blogConfig();
+    (next.collections[0]!.fields as Record<string, unknown>).shots = field.media({ many: true });
+    const statements = ddlBetween(blogConfig(), next).map((s) => s.sql);
+    expect(statements).toHaveLength(1);
+    expect(statements[0]).toContain(`CREATE TABLE "posts_shots"`);
+    expect(statements[0]).toContain(`REFERENCES "media"("id") ON DELETE CASCADE`);
+    expect(statements[0]).toContain(`"sort" INTEGER NOT NULL DEFAULT 0`);
+  });
+
+  it("adding a single media field emits an _id column + index (unchanged)", () => {
+    const next = blogConfig();
+    (next.collections[0]!.fields as Record<string, unknown>).hero = field.media({ accept: ["image"] });
+    const statements = ddlBetween(blogConfig(), next).map((s) => s.sql);
+    expect(statements[0]).toBe(
+      `ALTER TABLE "posts" ADD COLUMN "hero_id" TEXT REFERENCES "media"("id") ON DELETE SET NULL;`,
+    );
+    expect(statements[1]).toContain(`CREATE INDEX "idx_posts_hero" ON "posts" ("hero_id")`);
+  });
+
+  it("switching a media field single→many drops the column and creates the join table", () => {
+    const prev = blogConfig();
+    (prev.collections[0]!.fields as Record<string, unknown>).hero = field.media();
+    const next = blogConfig();
+    (next.collections[0]!.fields as Record<string, unknown>).hero = field.media({ many: true });
+    const sql = ddlBetween(prev, next)
+      .map((s) => s.sql)
+      .join("\n");
+    // SQLite copy-rename drops the old hero_id column, and the join table is created.
+    expect(sql).toContain(`CREATE TABLE "_new_posts"`);
+    expect(sql).not.toContain(`"hero_id"`);
+    expect(sql).toContain(`CREATE TABLE "posts_hero"`);
+    expect(sql).toContain(`REFERENCES "media"("id") ON DELETE CASCADE`);
+  });
+
   it("dropping a many-relation only drops the join table", () => {
     const next = blogConfig();
     delete (next.collections[0]!.fields as Record<string, unknown>).tags;

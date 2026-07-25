@@ -15,6 +15,22 @@ export function joinTableName(collection: string, fieldName: string): string {
   return `${collection}_${fieldName}`;
 }
 
+/**
+ * A field whose values live in a `<collection>_<field>` join table rather than
+ * a column on the main table: a many-relation or a many-media field. Both share
+ * the same owner_id/ref_id/sort join-table shape.
+ */
+export function isManyField(def: FieldDef): boolean {
+  return (def.type === "relation" && !!def.many) || (def.type === "media" && !!def.many);
+}
+
+/** The table a join field's `ref_id` points at: a relation's target, or the fixed `media` table. */
+export function joinTargetOf(def: FieldDef): string {
+  if (def.type === "relation") return def.to;
+  if (def.type === "media") return "media";
+  throw new Error(`joinTargetOf called on non-join field type "${def.type}"`);
+}
+
 export function isLocalized(c: SnapshotCollection): boolean {
   return c.locales.length > 0;
 }

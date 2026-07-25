@@ -19,6 +19,18 @@ export { runDeploy, type DeployOptions, type DeployResult } from "./commands/dep
 export { runDown, type DownOptions, type DownResult } from "./commands/down.js";
 export { runInit, type InitOptions, type DatabaseChoice, type Template } from "./commands/init.js";
 export { runDoctor, type DoctorCheck } from "./commands/doctor.js";
+export {
+  runUpdate,
+  detectPackageManager,
+  fetchLatestVersion,
+  isManagedDependency,
+  planDependencyUpdate,
+  applyDependencyUpdate,
+  type UpdateOptions,
+  type UpdateResult,
+  type DependencyUpdate,
+  type PackageManager,
+} from "./commands/update.js";
 export { CfClient, CfApiError, credentialsFromEnv, type CfCredentials } from "./cf/client.js";
 export { ensureD1Database, executeRemoteSql } from "./cf/d1.js";
 export { ensureR2Bucket, ensureR2Cors } from "./cf/r2.js";

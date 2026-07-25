@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { useCurrentUser, useNeedsSetup, useSchema } from "./lib/hooks.js";
 import { applyBrandColor } from "./lib/theme.js";
 import { Layout } from "./components/Layout.js";
@@ -8,8 +8,21 @@ import { AcceptInvite } from "./routes/AcceptInvite.js";
 import { SetupScreen } from "./routes/SetupScreen.js";
 import { CollectionBrowser } from "./routes/CollectionBrowser.js";
 import { DocumentEditor } from "./routes/DocumentEditor.js";
+import { SingletonEditor } from "./routes/SingletonEditor.js";
 import { MediaLibrary } from "./routes/MediaLibrary.js";
 import { Settings } from "./routes/Settings.js";
+
+/**
+ * The `/:collection` route: a singleton collection edits its one entry directly,
+ * every other collection shows the list browser.
+ */
+function CollectionRoute() {
+  const { collection = "" } = useParams();
+  const { data: schema } = useSchema();
+  const def = schema?.collections.find((c) => c.name === collection);
+  if (schema && def?.singleton) return <SingletonEditor />;
+  return <CollectionBrowser />;
+}
 
 export function App() {
   const { data: user, isLoading } = useCurrentUser();
@@ -38,7 +51,7 @@ export function App() {
         <Route index element={firstCollection ? <Navigate to={`/${firstCollection}`} replace /> : null} />
         <Route path="/media" element={<MediaLibrary />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/:collection" element={<CollectionBrowser />} />
+        <Route path="/:collection" element={<CollectionRoute />} />
         <Route path="/:collection/:id" element={<DocumentEditor />} />
       </Route>
     </Routes>

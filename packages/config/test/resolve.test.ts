@@ -253,4 +253,51 @@ describe("resolveConfig", () => {
     config.databse = { adapter: "d1" };
     expect(() => resolveConfig(config as never)).toThrowError(ConfigError);
   });
+
+  it("resolves media fields with many + accept, and a singleton collection", () => {
+    const resolved = resolveConfig(
+      defineConfig({
+        name: "site",
+        collections: [
+          collection("photographers", {
+            fields: {
+              name: field.text({ required: true }),
+              cover: field.media({ accept: ["image"] }),
+              gallery: field.media({ many: true, accept: ["image", "video"] }),
+              attachments: field.media({ many: true }),
+            },
+          }),
+          collection("about", {
+            singleton: true,
+            fields: { body: field.richText() },
+          }),
+        ],
+      }),
+    );
+    const photographers = resolved.collections.find((c) => c.name === "photographers")!;
+    const cover = photographers.fields.find((f) => f.name === "cover")!.def;
+    const gallery = photographers.fields.find((f) => f.name === "gallery")!.def;
+    expect(cover).toMatchObject({ type: "media", accept: ["image"] });
+    expect(cover).not.toHaveProperty("many");
+    expect(gallery).toMatchObject({ type: "media", many: true, accept: ["image", "video"] });
+    expect(photographers.singleton).toBe(false);
+
+    const about = resolved.collections.find((c) => c.name === "about")!;
+    expect(about.singleton).toBe(true);
+  });
+
+  it("rejects an unknown media accept kind", () => {
+    expect(() =>
+      resolveConfig(
+        defineConfig({
+          name: "site",
+          collections: [
+            collection("gallery", {
+              fields: { photos: field.media({ accept: ["image", "audio" as never] }) },
+            }),
+          ],
+        }),
+      ),
+    ).toThrowError(ConfigError);
+  });
 });

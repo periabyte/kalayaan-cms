@@ -54,6 +54,7 @@ export const mysqlDialect: SqlDialect = {
       case "custom":
         return `${name} TEXT`;
       case "media":
+        if (def.many) return null;
         return `${name} VARCHAR(${KEY_LEN}) REFERENCES ${q("media")}(${q("id")}) ON DELETE SET NULL`;
       case "relation": {
         if (def.many) return null;

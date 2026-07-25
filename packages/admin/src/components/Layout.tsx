@@ -1,5 +1,6 @@
 import {
 	ChevronLeft,
+	File,
 	FileText,
 	Image,
 	Menu,
@@ -144,7 +145,7 @@ export function Layout() {
 						</div>
 					)}
 					{schema?.collections.map((c) =>
-						navItem(`/${c.name}`, <FileText size={15} />, c.name),
+						navItem(`/${c.name}`, c.singleton ? <File size={15} /> : <FileText size={15} />, c.name),
 					)}
 					{expanded && (
 						<div className="px-2 pt-3.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle-foreground">

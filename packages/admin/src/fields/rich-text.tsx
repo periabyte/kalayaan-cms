@@ -184,6 +184,8 @@ export function RichTextField({ value, onChange }: FieldEditorProps) {
       <MediaPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
+        title="Insert image"
+        accept={["image"]}
         onPick={(m) =>
           editor
             .chain()

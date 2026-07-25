@@ -37,6 +37,10 @@ export interface RichTextField extends BaseFieldOptions {
 
 export interface MediaField extends BaseFieldOptions {
   type: "media";
+  /** Hold an ordered list of assets (gallery / attachments) instead of a single one. */
+  many?: boolean;
+  /** Restrict what can be uploaded/picked. Omit to accept any type. */
+  accept?: readonly ("image" | "video" | "file")[];
 }
 
 export interface RelationField extends BaseFieldOptions {
@@ -117,6 +121,11 @@ export interface CollectionDef {
   hooks?: CollectionHooks;
   /** Field name used as the display title in the admin UI. Defaults to the first text field. */
   titleField?: string;
+  /**
+   * Single-page content (About, Home, Contact): exactly one entry per locale, edited
+   * directly — no list of many rows, no "new entry". Localization and versioning still apply.
+   */
+  singleton?: boolean;
 }
 
 export type DatabaseAdapterName = "d1" | "postgres" | "mysql" | "mongodb";
@@ -234,6 +243,7 @@ export interface ResolvedCollection {
   defaultLocale: string | null;
   hooks: Required<CollectionHooks>;
   titleField: string | null;
+  singleton: boolean;
 }
 
 export interface ResolvedConfig {

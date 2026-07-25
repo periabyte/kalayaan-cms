@@ -11,7 +11,7 @@ import {
   type Query,
 } from "@kalayaan/core";
 import { emitDDL, type SqlDialect } from "./dialect.js";
-import { columnName, fieldDef, findField, isLocalized, joinTableName } from "./naming.js";
+import { columnName, fieldDef, findField, isLocalized, isManyField, joinTableName } from "./naming.js";
 import { buildFind, encodeCursor } from "./query-builder.js";
 
 export interface SqlRows {
@@ -129,7 +129,7 @@ export abstract class RelationalAdapter implements DatabaseAdapter {
     for (const f of c.fields) {
       const def = fieldDef(f);
       const value = doc[f.name];
-      if (def.type === "relation" && def.many) {
+      if (isManyField(def)) {
         for (const [i, refId] of (asIdArray(f.name, value) ?? []).entries()) {
           manyWrites.push({
             sql: `INSERT INTO ${this.q(joinTableName(c.name, f.name))} (${this.q("owner_id")}, ${this.q("ref_id")}, ${this.q("sort")}) VALUES (?, ?, ?)`,
@@ -189,7 +189,7 @@ export abstract class RelationalAdapter implements DatabaseAdapter {
       if (!(f.name in patch)) continue;
       const def = fieldDef(f);
       const value = patch[f.name];
-      if (def.type === "relation" && def.many) {
+      if (isManyField(def)) {
         statements.push({
           sql: `DELETE FROM ${this.q(joinTableName(c.name, f.name))} WHERE ${this.q("owner_id")} = ?`,
           params: [id],
@@ -226,7 +226,7 @@ export abstract class RelationalAdapter implements DatabaseAdapter {
     const statements: { sql: string; params: unknown[] }[] = [];
     for (const f of c.fields) {
       const def = fieldDef(f);
-      if (def.type === "relation" && def.many)
+      if (isManyField(def))
         statements.push({
           sql: `DELETE FROM ${this.q(joinTableName(c.name, f.name))} WHERE ${this.q("owner_id")} = ?`,
           params: [existing.id],
@@ -279,7 +279,7 @@ export abstract class RelationalAdapter implements DatabaseAdapter {
       }
       for (const f of c.fields) {
         const def = fieldDef(f);
-        if (def.type === "relation" && def.many) continue;
+        if (isManyField(def)) continue;
         doc[f.name] = fromStored(def.type, row[columnName(f)], this.dialect);
       }
       doc.created_at = row.created_at;
@@ -292,7 +292,7 @@ export abstract class RelationalAdapter implements DatabaseAdapter {
     const ids = docs.map((d) => d.id);
     for (const f of c.fields) {
       const def = fieldDef(f);
-      if (!(def.type === "relation" && def.many)) continue;
+      if (!isManyField(def)) continue;
       const placeholders = ids.map(() => "?").join(", ");
       const { rows: joins } = await this.exec(
         `SELECT ${this.q("owner_id")}, ${this.q("ref_id")} FROM ${this.q(joinTableName(c.name, f.name))} WHERE ${this.q("owner_id")} IN (${placeholders}) ORDER BY ${this.q("sort")}`,

@@ -33,7 +33,7 @@ function fieldSchema(def: FieldDef): z.ZodTypeAny {
       base = z.unknown();
       break;
     case "media":
-      base = z.string().nullable();
+      base = def.many ? z.array(z.string()) : z.string().nullable();
       break;
     case "relation":
       base = def.many ? z.array(z.string()) : z.string().nullable();
