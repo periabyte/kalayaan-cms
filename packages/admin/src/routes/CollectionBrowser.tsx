@@ -16,7 +16,8 @@ import { useToast } from "../components/toast.js";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog.js";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../components/ui/form.js";
 import { savedFilterNameSchema, type SavedFilterNameValues } from "../lib/schemas.js";
-import type { Doc, PublishStatus } from "../lib/types.js";
+import { useColumnPrefs, type ToggleableColumn } from "../lib/columnPrefs.js";
+import type { Doc, PublishStatus, SchemaField } from "../lib/types.js";
 
 type FilterId = "all" | "published" | "draft" | "scheduled" | "mt";
 const FILTERS: { id: FilterId; label: string; dot?: string }[] = [
@@ -27,12 +28,8 @@ const FILTERS: { id: FilterId; label: string; dot?: string }[] = [
   { id: "mt", label: "Needs review", dot: "hsl(var(--mt))" },
 ];
 
-const OPTIONAL_COLS = [
-  { key: "locales", label: "Locales" },
-  { key: "updated", label: "Updated" },
-  { key: "id", label: "ID" },
-] as const;
-type ColKey = (typeof OPTIONAL_COLS)[number]["key"];
+/** Synthetic (non-config) columns the user can toggle, shown after the config fields. */
+const EXTRA_COLS = { locales: "Locales", updated: "Updated" } as const;
 
 function matchesFilter(doc: Doc, f: FilterId): boolean {
   if (f === "all") return true;
@@ -45,6 +42,25 @@ function relativeTime(ms: number): string {
   if (days <= 0) return "today";
   if (days === 1) return "1d ago";
   return `${days}d ago`;
+}
+
+/** Renders an arbitrary config-field value as a short, readable table cell string. */
+function formatCell(value: unknown, type: SchemaField["type"]): string {
+  if (value == null || value === "") return "";
+  switch (type) {
+    case "boolean":
+      return value ? "Yes" : "No";
+    case "date":
+      return typeof value === "number" ? relativeTime(value) : String(value);
+    case "richText":
+    case "media":
+    case "relation":
+    case "custom":
+      // Objects/HTML don't belong in a cell — show a plain preview or a dash.
+      return typeof value === "string" ? value : "—";
+    default:
+      return String(value);
+  }
 }
 
 export function CollectionBrowser() {
@@ -60,7 +76,6 @@ export function CollectionBrowser() {
   const { data: page, isLoading, isError, refetch } = useCollectionDocs(collection, search);
 
   const [filter, setFilter] = useState<FilterId>("all");
-  const [cols, setCols] = useState<Record<ColKey, boolean>>({ locales: true, updated: true, id: false });
   const [colMenu, setColMenu] = useState(false);
   const [saveFilterOpen, setSaveFilterOpen] = useState(false);
 
@@ -71,6 +86,28 @@ export function CollectionBrowser() {
   const hasLocales = (def?.locales.length ?? 0) > 0;
   const titleField = def?.titleField ?? def?.fields.find((f) => f.type === "text")?.name;
   const slugField = def?.fields.find((f) => f.type === "slug")?.name;
+
+  // Config fields shown as their own columns — skip the title/slug fields, which
+  // already appear in the Title cell. Config order is preserved.
+  const fieldCols = useMemo(
+    () => (def?.fields ?? []).filter((f) => f.name !== titleField && f.name !== slugField),
+    [def, titleField, slugField],
+  );
+
+  // Everything the user can toggle: config fields (default off), then the
+  // synthetic Locales/Updated extras (default on). ID is pinned, never here.
+  const toggleable = useMemo<ToggleableColumn[]>(() => {
+    const list: ToggleableColumn[] = fieldCols.map((f) => ({
+      key: f.name,
+      label: f.label ?? f.name,
+      defaultOn: false,
+    }));
+    if (hasLocales) list.push({ key: "locales", label: EXTRA_COLS.locales, defaultOn: true });
+    list.push({ key: "updated", label: EXTRA_COLS.updated, defaultOn: true });
+    return list;
+  }, [fieldCols, hasLocales]);
+
+  const { cols, toggle } = useColumnPrefs(collection, toggleable);
 
   const docs = page?.docs ?? [];
   const counts = useMemo(() => {
@@ -104,23 +141,25 @@ export function CollectionBrowser() {
           </Button>
           <Popover open={colMenu} onClose={() => setColMenu(false)} className="absolute top-10 right-0 w-52">
             <div className="px-2.5 pt-1.5 pb-2 text-[11px] font-semibold uppercase tracking-wide text-subtle-foreground">Toggle columns</div>
-            {OPTIONAL_COLS.map((c) => (
-              <button
-                key={c.key}
-                onClick={() => setCols((s) => ({ ...s, [c.key]: !s[c.key] }))}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] hover:bg-accent"
-              >
-                <span
-                  className={cn(
-                    "w-4 h-4 rounded border border-border-strong flex items-center justify-center text-brand-foreground",
-                    cols[c.key] && "bg-brand border-brand",
-                  )}
+            <div className="max-h-72 overflow-y-auto">
+              {toggleable.map((c) => (
+                <button
+                  key={c.key}
+                  onClick={() => toggle(c.key)}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] hover:bg-accent text-left"
                 >
-                  {cols[c.key] && <Check size={11} strokeWidth={3} />}
-                </span>
-                {c.label}
-              </button>
-            ))}
+                  <span
+                    className={cn(
+                      "w-4 h-4 shrink-0 rounded border border-border-strong flex items-center justify-center text-brand-foreground",
+                      cols[c.key] && "bg-brand border-brand",
+                    )}
+                  >
+                    {cols[c.key] && <Check size={11} strokeWidth={3} />}
+                  </span>
+                  <span className="truncate">{c.label}</span>
+                </button>
+              ))}
+            </div>
           </Popover>
           <Button variant="default" onClick={() => navigate(`/${collection}/new`)}>
             <Plus size={15} strokeWidth={2.2} />
@@ -218,11 +257,12 @@ export function CollectionBrowser() {
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr className="sticky top-0 bg-card z-[1] shadow-[inset_0_-1px_0_hsl(var(--border))]">
-                <Th className="pl-5">Title</Th>
+                <Th className="w-[130px] pl-5">ID</Th>
+                <Th>Title</Th>
                 <Th className="w-[130px]">Status</Th>
+                {fieldCols.map((f) => cols[f.name] && <Th key={f.name} className="w-[140px]">{f.label ?? f.name}</Th>)}
                 {hasLocales && cols.locales && <Th className="w-[120px]">Locales</Th>}
-                {cols.updated && <Th className="w-[120px] text-right">Updated</Th>}
-                {cols.id && <Th className="w-[130px] text-right pr-5">ID</Th>}
+                {cols.updated && <Th className="w-[120px] text-right pr-5">Updated</Th>}
               </tr>
             </thead>
             <tbody>
@@ -235,20 +275,28 @@ export function CollectionBrowser() {
                     onClick={() => navigate(`/${collection}/${r.id}`)}
                     className="cursor-pointer border-b border-border hover:bg-card-2"
                   >
-                    <td className="py-[11px] pl-5 pr-3 max-w-0">
+                    <td className="py-[11px] pl-5 pr-3 font-mono text-[11px] text-muted-foreground truncate max-w-[130px]">{r.id}</td>
+                    <td className="py-[11px] px-3 max-w-0">
                       <div className="truncate font-medium">{title}</div>
                       {slug && <div className="font-mono text-[11px] text-muted-foreground truncate">/{slug}</div>}
                     </td>
                     <td className="py-[11px] px-3">
                       <StatusBadge status={r.publishStatus} mt={r.mt} />
                     </td>
+                    {fieldCols.map(
+                      (f) =>
+                        cols[f.name] && (
+                          <td key={f.name} className="py-[11px] px-3 text-muted-foreground truncate max-w-[140px]">
+                            {formatCell(r[f.name], f.type)}
+                          </td>
+                        ),
+                    )}
                     {hasLocales && cols.locales && (
                       <td className="py-[11px] px-3 font-mono text-[11px] text-muted-foreground">{String(r.locale ?? def.locales[0] ?? "")}</td>
                     )}
                     {cols.updated && (
-                      <td className="py-[11px] px-3 text-right text-muted-foreground tabular-nums">{relativeTime(r.updated_at)}</td>
+                      <td className="py-[11px] pl-3 pr-5 text-right text-muted-foreground tabular-nums">{relativeTime(r.updated_at)}</td>
                     )}
-                    {cols.id && <td className="py-[11px] pr-5 pl-3 text-right font-mono text-[11px] text-muted-foreground truncate">{r.id}</td>}
                   </tr>
                 );
               })}
