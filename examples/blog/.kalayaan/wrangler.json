@@ -1,0 +1,43 @@
+{
+  "name": "blog-example",
+  "main": "./worker-entry.mjs",
+  "compatibility_date": "2025-01-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blog-example-db",
+      "database_id": "local-dev"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "blog-example-media"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SESSIONS",
+      "id": "local-dev"
+    }
+  ],
+  "vars": {
+    "SESSION_SECRET": "6e57a8a9-7134-4a9c-b6f6-5a7011b3e866864923b7-57ed-488b-959c-6331c18b26f3",
+    "DB_ADAPTER": "d1"
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "assets": {
+    "directory": "/Users/paulperia/projects/edge-cms/packages/admin/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/",
+      "/api/*",
+      "/admin/api/*",
+      "/media/*",
+      "/mcp",
+      "/mcp/*"
+    ]
+  }
+}

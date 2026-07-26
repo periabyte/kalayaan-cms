@@ -1,6 +1,6 @@
 {
   "name": "@kalayaan/admin",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "license": "MIT",
   "description": "The schema-driven React/Tailwind admin SPA served by a deployed Kalayaan site.",
   "homepage": "https://kalayaan.periabyte.dev/",

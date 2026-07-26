@@ -1,5 +1,26 @@
 # @kalayaan/cli
 
+## 0.3.2
+
+### Patch Changes
+
+- 89b9994: Fix the deployed site's `/` rendering blank instead of the branded root page.
+
+  The runtime serves a branded splash at `GET /`, but the generated `wrangler.json` didn't list `/`
+  in `run_worker_first`, so Cloudflare's Assets binding served the admin SPA's `index.html` at `/`
+  instead — and since the SPA is scoped to `/admin`, it rendered blank. `/` is now included in
+  `run_worker_first` (only the exact root; `/admin` and other paths still fall through to Assets), so
+  the root page renders. Existing sites need a redeploy (`kalayaan update && kalayaan deploy`) to pick
+  up the regenerated config.
+  - @kalayaan/adapter-d1@0.3.2
+  - @kalayaan/adapter-mysql@0.3.2
+  - @kalayaan/adapter-postgres@0.3.2
+  - @kalayaan/adapter-relational@0.3.2
+  - @kalayaan/admin@0.3.2
+  - @kalayaan/config@0.3.2
+  - @kalayaan/core@0.3.2
+  - @kalayaan/runtime@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes

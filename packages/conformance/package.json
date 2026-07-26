@@ -1,6 +1,6 @@
 {
   "name": "@kalayaan/adapter-conformance",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "license": "MIT",
   "description": "Shared conformance test suite for Kalayaan DatabaseAdapter implementations.",
   "homepage": "https://kalayaan.periabyte.dev/",

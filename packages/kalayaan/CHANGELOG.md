@@ -1,5 +1,17 @@
 # kalayaan
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [89b9994]
+  - @kalayaan/cli@0.3.2
+  - @kalayaan/adapter-mysql@0.3.2
+  - @kalayaan/adapter-postgres@0.3.2
+  - @kalayaan/config@0.3.2
+  - @kalayaan/core@0.3.2
+  - @kalayaan/runtime@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes

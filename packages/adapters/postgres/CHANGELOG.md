@@ -1,5 +1,13 @@
 # @kalayaan/adapter-postgres
 
+## 0.3.2
+
+### Patch Changes
+
+- @kalayaan/adapter-relational@0.3.2
+- @kalayaan/config@0.3.2
+- @kalayaan/core@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes

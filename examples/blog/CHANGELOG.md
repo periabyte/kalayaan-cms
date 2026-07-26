@@ -1,5 +1,11 @@
 # kalayaan-example-blog
 
+## 0.0.8
+
+### Patch Changes
+
+- kalayaan@0.3.2
+
 ## 0.0.7
 
 ### Patch Changes
