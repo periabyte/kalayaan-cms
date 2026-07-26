@@ -1,16 +1,21 @@
 # Serving your own page at `/`
 
-Kalayaan is headless: there's no "root page" or homepage concept in `cms.config.ts`, and the
-Worker itself has no `GET /` route. Today, hitting `/` on a deployed site serves the built
-admin SPA's `index.html` — but the admin app is mounted with a `/admin` base and has no route
-for `/`, so it boots, matches nothing, and renders blank. If you want `/` to show your own
-content instead, that's a hand-edit to the assets directory, not a config option.
+Kalayaan is headless: there's no "root page" or homepage concept in `cms.config.ts`. By default,
+hitting `/` on a deployed site shows a small **branded Kalayaan splash** — the Worker serves it
+directly (`GET /` in the runtime), and `/` is listed in the generated `wrangler.json`'s
+`run_worker_first` so the Worker handles it instead of the static assets. If you want `/` to show
+your own content instead, that's a hand-edit to the assets directory (below), not a config option.
 
-## Why `/` is blank today
+> **Blank `/`?** If your deployed site shows a blank page at `/` instead of the splash, your
+> deploy predates the fix that adds `/` to `run_worker_first` (Kalayaan ≥ 0.3.2). Update and
+> redeploy: `npx kalayaan update && npx kalayaan deploy`.
 
-Non-API paths (anything other than `/api/*`, `/admin/api/*`, `/media/*`, `/mcp*`) are served by
-Cloudflare's static Assets binding, which points at the built admin SPA. That SPA's router is
-scoped to `/admin`, so `/` loads the same `index.html` but renders nothing there.
+## How `/` is served
+
+The root path `/` is in `run_worker_first`, so the Worker answers it (the splash). Every other
+non-API path — `/admin`, its assets, anything you add — is served by Cloudflare's static Assets
+binding, which points at the built admin SPA. That SPA's router is scoped to `/admin`; the admin
+app lives there, and unmatched non-API paths fall back to its `index.html`.
 
 ## Simpler alternative: put the CMS on a subdomain
 

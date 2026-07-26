@@ -33,7 +33,12 @@ const COMPATIBILITY_DATE = "2025-01-01";
 // `/mcp` is a bare endpoint (the JSON-RPC POST target), so it needs an exact
 // match in addition to `/mcp/*` — a `/*` pattern alone does NOT cover the path
 // without a trailing segment, and Assets would otherwise swallow POST /mcp.
-export const RUN_WORKER_FIRST = ["/api/*", "/admin/api/*", "/media/*", "/mcp", "/mcp/*"];
+// `/` is listed so the Worker's root route (the branded splash in runtime's
+// root.ts) runs instead of the Assets binding serving the admin SPA's index.html
+// at `/` — the SPA is scoped to `/admin`, so without this `/` renders blank.
+// Only the exact root is claimed; `/admin` and every other non-API path still
+// fall through to Assets.
+export const RUN_WORKER_FIRST = ["/", "/api/*", "/admin/api/*", "/media/*", "/mcp", "/mcp/*"];
 
 export interface WranglerConfigOptions {
   entryPath: string;

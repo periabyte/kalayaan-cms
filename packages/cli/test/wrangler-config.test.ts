@@ -5,14 +5,16 @@ import { generateWranglerConfig } from "../src/wrangler-config.js";
 const config = resolveConfig(defineConfig({ name: "my-site", collections: [] }));
 
 describe("generateWranglerConfig", () => {
-  it("scopes run_worker_first to exactly the API/media prefixes, leaving everything else to Assets", () => {
+  it("routes the root path plus the API/media prefixes to the Worker, leaving everything else to Assets", () => {
     const wrangler = generateWranglerConfig(config, {
       entryPath: "./worker-entry.mjs",
       assetsDir: "./admin-dist",
       sessionSecret: "s",
       resources: {},
     });
-    expect(wrangler.assets?.run_worker_first).toEqual(["/api/*", "/admin/api/*", "/media/*", "/mcp", "/mcp/*"]);
+    // `/` must be first-class so the Worker's branded root page renders instead
+    // of the Assets binding serving the (blank-at-`/`) admin SPA index.html.
+    expect(wrangler.assets?.run_worker_first).toEqual(["/", "/api/*", "/admin/api/*", "/media/*", "/mcp", "/mcp/*"]);
     expect(wrangler.assets?.not_found_handling).toBe("single-page-application");
   });
 
