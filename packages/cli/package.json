@@ -1,6 +1,6 @@
 {
   "name": "@kalayaan/cli",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "MIT",
   "description": "The `kalayaan` CLI implementation (login/init/dev/migrate/deploy/doctor/down). Most users should install the `kalayaan` package instead.",
   "homepage": "https://kalayaan.periabyte.dev/",

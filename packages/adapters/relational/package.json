@@ -1,6 +1,6 @@
 {
   "name": "@kalayaan/adapter-relational",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "MIT",
   "description": "Shared relational (SQL) query builder and adapter base for Kalayaan storage adapters.",
   "homepage": "https://kalayaan.periabyte.dev/",
