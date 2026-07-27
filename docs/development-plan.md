@@ -4,16 +4,53 @@
 > planning workspace; this file is the version-controlled reference. Read the **Status** section
 > first — it names what's actually built and what's next.
 
-## Status (updated 2026-07-26)
+## Status (updated 2026-07-27)
 
-**All five phases have landed, plus a full access-control + onboarding layer; the admin UI runs on
-real shadcn/ui + react-hook-form; and the project now ships to npm.** Everything is **merged to
-`main`** in the repo **`github.com/periabyte/kalayaan-cms`**. **CI is green** on `main`
-(`.github/workflows/ci.yml`), the **docs site is live** at `kalayaan.periabyte.dev`
-(`.github/workflows/docs.yml`), and the packages are **published to npm** — latest release
-**v0.3.1** (2026-07-26), cut via changesets and published by `.github/workflows/release.yml` using
-npm **OIDC trusted publishing** (no `NPM_TOKEN`). Release flow is documented in `docs/releasing.md`.
-Repo root stays green: `pnpm build && pnpm typecheck && pnpm test`.
+**All five phases have landed, plus a full access-control + onboarding layer, a plugin/module
+extension seam, and the admin UI runs on real shadcn/ui + react-hook-form; the project ships to
+npm.** Everything is **merged to `main`** in the repo **`github.com/periabyte/kalayaan-cms`**. **CI
+is green** on `main` (`.github/workflows/ci.yml`), the **docs site is live** at
+`kalayaan.periabyte.dev` (`.github/workflows/docs.yml`), and the packages are **published to npm**
+— latest release **v0.4.0** (2026-07-27), cut via changesets and published by
+`.github/workflows/release.yml` using npm **OIDC trusted publishing** (no `NPM_TOKEN`). Release
+flow is documented in `docs/releasing.md`. Repo root stays green:
+`pnpm build && pnpm typecheck && pnpm test`.
+
+### This session (2026-07-27): business-logic extension seam — plugin routes, custom RBAC subjects, Modules
+
+- **`Plugin.routes`.** Plugins can now register business-specific HTTP endpoints (not just plain
+  CRUD), mounted under `/api/ext/*`. Each route gets its own auth (public or required), an optional
+  declared `permission` gate, and a `RouteContext` with `db` — an RBAC- and lifecycle-hook-aware
+  `DataApi` (`ctx.db.collection(name).find/findOne/create/update/delete`, plus `ctx.db.tx()` for
+  atomic multi-collection writes) that reuses the exact same write pipeline (hooks, versioning,
+  webhooks, reindexing) as the built-in admin CRUD API — so a custom route can touch several
+  collections without becoming a permission bypass or skipping side effects. `ctx.rawAdapter` is the
+  explicit, auditable escape hatch. `packages/core/src/plugin.ts` (`RouteDef`/`RouteContext`/
+  `DataApi`/`CollectionApi`), `packages/runtime/src/extensions/data-api.ts`,
+  `packages/runtime/src/routes/extensions.ts`; worked example in `examples/blog/cms.plugins.ts`
+  (bulk-publish-by-author).
+- **Custom RBAC subjects.** A role's `permissions` can now grant subjects beyond collections and
+  the fixed system areas — e.g. `"marketplace:order"` — as long as a plugin declares them (via
+  `Plugin.subjects` or implicitly through a route's `permission.subject`).
+  `resolveConfig(config, { extraSubjects })` accepts them; the CLI's `loadConfig` collects them from
+  `cms.plugins.ts`/`cms.modules.ts` before validating roles, and the **generated Worker entry**
+  threads the same subjects into its own `resolveConfig` call on every cold start (it's not just a
+  build-time check) — missing this would 500 a deployed project granting a custom subject.
+- **`Module` + `cms.modules.ts` + `PaymentProvider`.** A `Module` is a `Plugin` plus build-time
+  `collections` (merged into the project's config before `resolveConfig`/`snapshotOf`, so
+  `kalayaan migrate` builds the tables) and `provides.payment` — a factory building a
+  `PaymentProvider` from the live per-request `env` (Workers only expose secrets there, not at
+  import time). `PaymentProvider` (`createIntent`/`retrieveIntent`/`refund`) mirrors the
+  `AIProvider`/`EmailProvider` seam; `StripePaymentProvider` in `@kalayaan/runtime` is the reference
+  fetch-based implementation, re-exported through `kalayaan` for projects to construct directly (no
+  Cloudflare-native payment binding to auto-wire, unlike AI/email). A project's optional
+  `cms.modules.ts` default-exports `Module[]`; the CLI bundles it like `cms.plugins.ts` and merges
+  its collections into `raw.collections` before validation. Docs: new
+  [Plugins & modules](../docs-site/src/content/docs/guides/plugins-and-modules.md) guide.
+- Verified: full monorepo `pnpm build && pnpm typecheck && pnpm test` green throughout. **Not yet
+  verified live** — this is build/typecheck/test-level verification only; per the standing lesson
+  below, drive a real `kalayaan dev`/`wrangler dev` with a `cms.plugins.ts`/`cms.modules.ts` before
+  fully trusting the `/api/ext` mount and the CLI's bundling/merge path.
 
 **The open backlog now lives in a single place:** the **[Roadmap](../docs-site/src/content/docs/roadmap.md)**
 page in the docs site (`kalayaan.periabyte.dev/roadmap`). Treat that page as the source of truth for
@@ -129,9 +166,14 @@ the free path free, and reduces setup friction for one person shipping a site.
   all three dialects (was a gap); config-generated **GraphQL** read API behind a flag (relation/media
   fields resolve to nested objects); **MCP** server at `/mcp` (JSON-RPC, API-key-scoped tools);
   **Cloudflare Access** auth mode (RS256 JWKS verify → user); `kalayaan-skill` package;
-  `actions/deploy` GitHub Action; init templates; **docs site live**. *Still open:* GraphQL is
-  read-only (no mutations); MCP is single-response (no SSE/streaming); **Access is runtime-only, not
-  wired through `init`/`deploy`**; no Deploy-to-Cloudflare button.
+  `actions/deploy` GitHub Action; init templates; **docs site live**. **Now done (were gaps):**
+  business-specific plugin **routes** (`Plugin.routes`, mounted at `/api/ext`, RBAC- and
+  hook-aware `DataApi`), **custom RBAC subjects** beyond collections/system areas, and a
+  **`Module`** system (`cms.modules.ts`: build-time collections + routes/hooks + a `PaymentProvider`
+  seam with a `StripePaymentProvider` reference impl) for self-contained business features like a
+  marketplace. *Still open:* GraphQL is read-only (no mutations); MCP is single-response (no
+  SSE/streaming); **Access is runtime-only, not wired through `init`/`deploy`**; no
+  Deploy-to-Cloudflare button; no worked module example beyond the guide's snippets.
 
 ### Admin UI redesign + this session's polish (on branch, uncommitted working tree)
 

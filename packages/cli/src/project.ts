@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { bundlePluginsModule, loadConfig, writeGeneratedConfigModule, type LoadedConfig } from "./config-loader.js";
+import { bundleModulesModule, bundlePluginsModule, loadConfig, writeGeneratedConfigModule, type LoadedConfig } from "./config-loader.js";
 import { generateEntrySource } from "./entry-template.js";
 import { generateWranglerConfig, type WranglerConfig } from "./wrangler-config.js";
 import { readState } from "./state.js";
@@ -25,8 +25,11 @@ export async function prepareProject(
 ): Promise<PreparedProject> {
   const loaded = await loadConfig(projectDir);
   const configModulePath = await writeGeneratedConfigModule(projectDir, loaded.raw);
-  // Optional project plugins (lifecycle hooks + custom field types).
+  // Optional project plugins (lifecycle hooks + custom field types) and
+  // modules (plugins plus collections, merged into loaded.raw above, and
+  // provider factories like a PaymentProvider).
   const pluginsModulePath = await bundlePluginsModule(projectDir);
+  const modulesModulePath = await bundleModulesModule(projectDir);
 
   const entryPath = join(projectDir, ".kalayaan", "worker-entry.mjs");
   await mkdir(join(projectDir, ".kalayaan"), { recursive: true });
@@ -36,6 +39,7 @@ export async function prepareProject(
       "./config.generated.mjs",
       loaded.resolved.database.adapter,
       pluginsModulePath ? "./plugins.generated.mjs" : undefined,
+      modulesModulePath ? "./modules.generated.mjs" : undefined,
     ),
   );
   void configModulePath; // co-located with entryPath; referenced by relative path above

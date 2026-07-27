@@ -1,20 +1,13 @@
 import { Hono } from "hono";
-import { EdgeCMSError, PluginHost, type Doc, type HookOperation } from "@kalayaan/core";
+import { EdgeCMSError, PluginHost, type Doc } from "@kalayaan/core";
 import type { ResolvedCollection, ResolvedConfig } from "@kalayaan/config";
 import { requireAuth, requirePermission, assertPermission, type AuthEnv } from "../auth/middleware.js";
 import { csrfProtection } from "../auth/csrf.js";
 import { parseContentQuery } from "../query-params.js";
 import { collectionWriteSchema } from "../validation.js";
-import { computeStatus, serializeDoc, serializePage } from "../status.js";
-import { VersionStore, type VersionStatus } from "../versions/version-store.js";
-import { dispatch } from "../webhooks/dispatch.js";
-import {
-  createDocument,
-  applyCustomFieldTypes,
-  fireWriteEvents,
-  reindex,
-  deindex,
-} from "../content/create-document.js";
+import { serializeDoc, serializePage } from "../status.js";
+import { VersionStore } from "../versions/version-store.js";
+import { createDocument, updateDocument, deleteDocument } from "../content/create-document.js";
 import type { VectorizeBinding } from "../ai/search-index.js";
 import type { AIProvider } from "@kalayaan/core";
 import type { ContentEnv } from "./content.js";
@@ -35,47 +28,10 @@ export function adminCrudRoutes(config: ResolvedConfig, plugins: PluginHost = ne
     return { type: c.var.actor.type, id: c.var.actor.type === "user" ? c.var.actor.id : null };
   }
 
-  /** After-write hooks: afterChange always, afterPublish when the doc is live. */
-  async function runAfterWrite(
-    c: { var: { actor: AuthEnv["Variables"]["actor"] } },
-    collection: string,
-    operation: HookOperation,
-    doc: Doc,
-  ): Promise<void> {
-    const ctx = { collection, operation, data: doc as Record<string, unknown>, actor: actor(c) };
-    await plugins.afterChange(ctx);
-    if (computeStatus(doc) === "published") await plugins.afterPublish(ctx);
-  }
-
   function mustCollection(name: string) {
     const c = byName.get(name);
     if (!c) throw new EdgeCMSError("not_found", `Unknown collection "${name}"`);
     return c;
-  }
-
-  function actorId(c: { var: { actor: AuthEnv["Variables"]["actor"] } }): string | null {
-    return c.var.actor.type === "user" ? c.var.actor.id : null;
-  }
-
-  // Record a snapshot of a just-written doc. Synchronous (before responding):
-  // version history must be durable for restore to be trustworthy.
-  async function recordVersion(
-    db: D1Database,
-    collection: string,
-    doc: Doc,
-    createdBy: string | null,
-    status: VersionStatus = computeStatus(doc),
-  ): Promise<void> {
-    await new VersionStore(db).record({ collection, doc, status, createdBy });
-  }
-
-  /**
-   * `?review=mt` marks the version this write records as needing machine-
-   * translation review, which the list endpoint's `mt` flag reads. The stored
-   * document is unchanged — only the version status carries the review intent.
-   */
-  function versionStatusFor(c: { req: { query: (k: string) => string | undefined } }, doc: Doc): VersionStatus {
-    return c.req.query("review") === "mt" ? "mt-review" : computeStatus(doc);
   }
 
   app.get("/:collection", requirePermission("read"), async (c) => {
@@ -141,35 +97,22 @@ export function adminCrudRoutes(config: ResolvedConfig, plugins: PluginHost = ne
 
   app.patch("/:collection/:id", requirePermission("update"), async (c) => {
     const collection = mustCollection(c.req.param("collection"));
-    const parsed = applyCustomFieldTypes(plugins, collection, collectionWriteSchema(collection, { partial: true }).parse(await c.req.json()));
+    const parsed = collectionWriteSchema(collection, { partial: true }).parse(await c.req.json());
     // Publishing via update needs the distinct `publish` permission.
     if ("published_at" in parsed) assertPermission(c, "publish", collection.name);
-    const body = await plugins.beforeChange({
-      collection: collection.name,
-      operation: "update",
+    const doc = await updateDocument(c, { config, plugins }, {
+      collection,
+      id: c.req.param("id"),
       data: parsed,
       actor: actor(c),
+      mtReview: c.req.query("review") === "mt",
     });
-    const doc = await c.var.adapter.update({ collection: collection.name, id: c.req.param("id") }, body);
-    await recordVersion(c.env.DB, collection.name, doc, actorId(c), versionStatusFor(c, doc));
-    fireWriteEvents(c, collection.name, doc, body);
-    reindex(config, c, collection.name, doc);
-    await runAfterWrite(c, collection.name, "update", doc);
     return c.json({ doc: serializeDoc(doc) });
   });
 
   app.delete("/:collection/:id", requirePermission("delete"), async (c) => {
     const collection = mustCollection(c.req.param("collection"));
-    const id = c.req.param("id");
-    await c.var.adapter.delete({ collection: collection.name, id });
-    dispatch(c.env.DB, c.executionCtx, "document.deleted", {
-      event: "document.deleted",
-      collection: collection.name,
-      id,
-      at: Date.now(),
-    });
-    deindex(config, c, id);
-    await plugins.afterDelete({ collection: collection.name, operation: "delete", data: { id }, actor: actor(c) });
+    await deleteDocument(c, { config, plugins }, { collection, id: c.req.param("id"), actor: actor(c) });
     return c.body(null, 204);
   });
 
@@ -194,18 +137,10 @@ export function adminCrudRoutes(config: ResolvedConfig, plugins: PluginHost = ne
     const collection = mustCollection(c.req.param("collection"));
     const id = c.req.param("id");
     const version = await loadVersion(c.env.DB, collection.name, id, c.req.param("versionId"), c);
-    const restoreBody = applyCustomFieldTypes(
-      plugins,
-      collection,
-      collectionWriteSchema(collection, { partial: true }).parse(
-        strippedSnapshot(JSON.parse(version.snapshot), collection),
-      ),
+    const restoreBody = collectionWriteSchema(collection, { partial: true }).parse(
+      strippedSnapshot(JSON.parse(version.snapshot), collection),
     );
-    const doc = await c.var.adapter.update({ collection: collection.name, id }, restoreBody);
-    await recordVersion(c.env.DB, collection.name, doc, actorId(c));
-    fireWriteEvents(c, collection.name, doc, restoreBody);
-    reindex(config, c, collection.name, doc);
-    await runAfterWrite(c, collection.name, "update", doc);
+    const doc = await updateDocument(c, { config, plugins }, { collection, id, data: restoreBody, actor: actor(c) });
     return c.json({ doc: serializeDoc(doc) });
   });
 

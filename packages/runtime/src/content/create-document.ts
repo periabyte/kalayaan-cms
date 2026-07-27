@@ -62,6 +62,65 @@ export async function createDocument(
   return doc;
 }
 
+export interface UpdateDocumentInput {
+  collection: ResolvedCollection;
+  id: string;
+  /** Raw partial write data (already schema-parsed; custom field types are applied here). */
+  data: Record<string, unknown>;
+  actor: { type: string; id: string | null };
+  /** Marks the recorded version as machine-translation review (see `?review=mt`). */
+  mtReview?: boolean;
+}
+
+/**
+ * The single document-update pipeline, shared by the authenticated admin CRUD
+ * API and version restore: custom-field validation → beforeChange →
+ * adapter.update → version snapshot → webhooks → reindex → after-hooks.
+ * Callers own auth, request validation, and the publish permission check.
+ */
+export async function updateDocument(
+  c: WriteCtx,
+  deps: CreateDocumentDeps,
+  input: UpdateDocumentInput,
+): Promise<Doc> {
+  const { config, plugins } = deps;
+  const { collection, id, actor } = input;
+  const data = applyCustomFieldTypes(plugins, collection, input.data);
+  const body = await plugins.beforeChange({ collection: collection.name, operation: "update", data, actor });
+  const doc = await c.var.adapter.update({ collection: collection.name, id }, body);
+  const status: VersionStatus = input.mtReview ? "mt-review" : computeStatus(doc);
+  await new VersionStore(c.env.DB).record({ collection: collection.name, doc, status, createdBy: actor.id });
+  fireWriteEvents(c, collection.name, doc, body);
+  reindex(config, c, collection.name, doc);
+  const hookCtx = { collection: collection.name, operation: "update" as const, data: doc as Record<string, unknown>, actor };
+  await plugins.afterChange(hookCtx);
+  if (computeStatus(doc) === "published") await plugins.afterPublish(hookCtx);
+  return doc;
+}
+
+export interface DeleteDocumentInput {
+  collection: ResolvedCollection;
+  id: string;
+  actor: { type: string; id: string | null };
+}
+
+/**
+ * The single document-delete pipeline, shared by the authenticated admin CRUD
+ * API: adapter.delete → webhook → deindex → afterDelete hook. Callers own auth.
+ */
+export async function deleteDocument(c: WriteCtx, deps: CreateDocumentDeps, input: DeleteDocumentInput): Promise<void> {
+  const { collection, id, actor } = input;
+  await c.var.adapter.delete({ collection: collection.name, id });
+  dispatch(c.env.DB, c.executionCtx, "document.deleted", {
+    event: "document.deleted",
+    collection: collection.name,
+    id,
+    at: Date.now(),
+  });
+  deindex(deps.config, c, id);
+  await deps.plugins.afterDelete({ collection: collection.name, operation: "delete", data: { id }, actor });
+}
+
 /**
  * A singleton collection holds exactly one entry per locale (About/Home/Contact).
  * Reject a second create for a locale that already has one — the caller should

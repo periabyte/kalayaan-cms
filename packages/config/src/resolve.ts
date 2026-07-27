@@ -181,7 +181,18 @@ export class ConfigError extends Error {
   }
 }
 
-export function resolveConfig(input: EdgeCMSConfig): ResolvedConfig {
+export interface ResolveConfigOptions {
+  /**
+   * Permission subjects beyond collections and the built-in system areas that
+   * a role's grant is allowed to name — e.g. `"marketplace:order"`, declared
+   * by a plugin's `Plugin.subjects` or a route's `RouteDef.permission`. Lets
+   * a project grant plugin-defined business subjects in `roles` without the
+   * validator rejecting them as unknown.
+   */
+  extraSubjects?: readonly string[];
+}
+
+export function resolveConfig(input: EdgeCMSConfig, options: ResolveConfigOptions = {}): ResolvedConfig {
   const parsed = configSchema.safeParse(input);
   if (!parsed.success) {
     throw new ConfigError(
@@ -237,15 +248,17 @@ export function resolveConfig(input: EdgeCMSConfig): ResolvedConfig {
     }
   }
 
-  // Roles: every named subject must be a real collection or a system subject.
+  // Roles: every named subject must be a real collection, a system subject,
+  // or a plugin-declared custom subject (options.extraSubjects).
   const systemSubjects = new Set<string>(SYSTEM_SUBJECTS);
+  const extraSubjects = new Set<string>(options.extraSubjects ?? []);
   for (const [roleName, def] of Object.entries(config.roles ?? {})) {
     for (const [i, grant] of def.permissions.entries()) {
       if (grant.subjects === "*") continue;
       for (const subject of grant.subjects) {
-        if (!collectionNames.has(subject) && !systemSubjects.has(subject))
+        if (!collectionNames.has(subject) && !systemSubjects.has(subject) && !extraSubjects.has(subject))
           issues.push(
-            `roles.${roleName}.permissions[${i}]: subject "${subject}" is not a collection or system subject (${[...systemSubjects].join(", ")})`,
+            `roles.${roleName}.permissions[${i}]: subject "${subject}" is not a collection, system subject (${[...systemSubjects].join(", ")}), or a plugin-declared subject${extraSubjects.size ? ` (${[...extraSubjects].join(", ")})` : ""}`,
           );
       }
     }

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { PluginHost, type HookContext, type Plugin } from "../src/plugin.js";
+import { PluginHost, type HookContext, type Module, type Plugin } from "../src/plugin.js";
+import type { PaymentProvider } from "../src/payment.js";
 
 const ctx = (over: Partial<HookContext> = {}): HookContext => ({
   collection: "posts",
@@ -54,5 +55,64 @@ describe("PluginHost", () => {
     const host = new PluginHost();
     expect(await host.beforeChange(ctx({ data: { a: 1 } }))).toEqual({ a: 1 });
     await expect(host.afterDelete(ctx({ operation: "delete" }))).resolves.toBeUndefined();
+  });
+
+  it("dedupes routes across plugins and throws on a method+path collision", () => {
+    const a: Plugin = { name: "a", routes: [{ method: "GET", path: "/x", handler: () => ({}) }] };
+    const b: Plugin = { name: "b", routes: [{ method: "POST", path: "/y", handler: () => ({}) }] };
+    expect(new PluginHost([a, b]).routes().map((r) => r.path)).toEqual(["/x", "/y"]);
+
+    const clash: Plugin = { name: "c", routes: [{ method: "GET", path: "/x", handler: () => ({}) }] };
+    expect(() => new PluginHost([a, clash]).routes()).toThrow(/Duplicate plugin route/);
+  });
+
+  it("collects declared and route-implied custom subjects, deduplicated", () => {
+    const marketplace: Plugin = {
+      name: "marketplace",
+      subjects: ["marketplace:payout"],
+      routes: [
+        { method: "POST", path: "/orders", permission: { action: "create", subject: "marketplace:order" }, handler: () => ({}) },
+        // Same subject as another plugin's declared `subjects` — should not duplicate.
+        { method: "GET", path: "/payouts", permission: { action: "read", subject: "marketplace:payout" }, handler: () => ({}) },
+      ],
+    };
+    const subjects = new PluginHost([marketplace]).subjects();
+    expect(subjects.sort()).toEqual(["marketplace:order", "marketplace:payout"]);
+  });
+
+  it("treats a Module's routes/hooks/fieldTypes/subjects like a Plugin's", async () => {
+    const fake: PaymentProvider = {
+      createIntent: vi.fn(),
+      retrieveIntent: vi.fn(),
+      refund: vi.fn(),
+    };
+    const marketplace: Module = {
+      name: "marketplace",
+      collections: [{ name: "orders", fields: {} }],
+      subjects: ["marketplace:order"],
+      routes: [{ method: "POST", path: "/orders", handler: () => ({}) }],
+      fieldTypes: { money: (v) => v },
+      provides: { payment: () => fake },
+    };
+    const host = new PluginHost([marketplace]);
+    expect(host.routes()).toHaveLength(1);
+    expect(host.subjects()).toEqual(["marketplace:order"]);
+    expect(Object.keys(host.fieldTypes())).toEqual(["money"]);
+  });
+
+  it("builds the payment provider from the first module whose provides.payment factory is set", () => {
+    const fake: PaymentProvider = { createIntent: vi.fn(), retrieveIntent: vi.fn(), refund: vi.fn() };
+    const factory = vi.fn(() => fake);
+    const withoutPayment: Module = { name: "a" };
+    const withPayment: Module = { name: "b", provides: { payment: factory } };
+    const host = new PluginHost([withoutPayment, withPayment]);
+    const env = { STRIPE_SECRET_KEY: "sk_test" };
+    expect(host.payment(env)).toBe(fake);
+    expect(factory).toHaveBeenCalledWith(env);
+  });
+
+  it("returns undefined for payment() when no module provides one", () => {
+    expect(new PluginHost([{ name: "a" } as Plugin]).payment({})).toBeUndefined();
+    expect(new PluginHost().payment({})).toBeUndefined();
   });
 });

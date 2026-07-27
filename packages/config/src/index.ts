@@ -5,6 +5,7 @@ export {
   ConfigError,
   RESERVED_FIELD_NAMES,
   RESERVED_COLLECTION_NAMES,
+  type ResolveConfigOptions,
 } from "./resolve.js";
 export { configJsonSchema } from "./json-schema.js";
 export { defaultRoles, ADMIN_ROLE, PUBLIC_ROLE } from "./roles.js";

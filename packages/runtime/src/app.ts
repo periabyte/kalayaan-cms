@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { ResolvedConfig, SchemaSnapshot, RolesConfig } from "@kalayaan/config";
-import type { AIProvider, EmailProvider, Plugin } from "@kalayaan/core";
+import type { AIProvider, EmailProvider, Module, PaymentProvider, Plugin } from "@kalayaan/core";
 import { PluginHost } from "@kalayaan/core";
 import { R2Adapter } from "@kalayaan/storage-r2";
 import { d1AdapterFactory, type DatabaseAdapterFactory, type HyperdriveBinding } from "./adapter.js";
@@ -18,6 +18,7 @@ import { adminUserRoutes } from "./routes/admin-users.js";
 import { adminSavedFilterRoutes } from "./routes/admin-saved-filters.js";
 import { adminAiRoutes } from "./routes/admin-ai.js";
 import { mcpRoutes } from "./routes/mcp.js";
+import { extensionRoutes } from "./routes/extensions.js";
 import { authRoutes } from "./routes/auth.js";
 import { schemaRoute } from "./routes/schema.js";
 import { homeRoute } from "./routes/root.js";
@@ -48,6 +49,14 @@ export interface CreateAppOptions {
   /** Runtime plugins — lifecycle hooks and custom field types (see @kalayaan/core). */
   plugins?: Plugin[];
   /**
+   * Modules — a `Plugin` plus build-time collections and provider factories
+   * (e.g. a marketplace's `orders`/`payouts` tables + a Stripe `PaymentProvider`).
+   * The CLI merges each module's `collections` into the config before this
+   * runs; here they're registered alongside `plugins` for their routes/hooks/
+   * fieldTypes/subjects and scanned for a `provides.payment` factory.
+   */
+  modules?: Module[];
+  /**
    * Selects the database adapter per request. Defaults to D1. The CLI-generated
    * entry supplies a Postgres/MySQL factory (from `kalayaan/postgres`|`/mysql`)
    * only for those engines, keeping external drivers out of D1 bundles.
@@ -57,10 +66,13 @@ export interface CreateAppOptions {
 
 export function createApp(config: ResolvedConfig, snapshot: SchemaSnapshot, options: CreateAppOptions = {}) {
   const app = new Hono<
-    { Bindings: Bindings; Variables: { ai?: AIProvider; email?: EmailProvider; roles?: RolesConfig } } & ContentEnv &
+    {
+      Bindings: Bindings;
+      Variables: { ai?: AIProvider; email?: EmailProvider; payment?: PaymentProvider; roles?: RolesConfig };
+    } & ContentEnv &
       MediaEnv
   >();
-  const plugins = new PluginHost(options.plugins ?? []);
+  const plugins = new PluginHost([...(options.plugins ?? []), ...(options.modules ?? [])]);
   const makeAdapter = options.databaseAdapter ?? d1AdapterFactory;
 
   app.use("*", async (c, next) => {
@@ -75,6 +87,8 @@ export function createApp(config: ResolvedConfig, snapshot: SchemaSnapshot, opti
     // send_email binding is present. Invites degrade to a copyable link otherwise.
     if (c.env.EMAIL && config.email.from)
       c.set("email", new CloudflareEmailProvider(c.env.EMAIL, config.email as { from: string; fromName?: string | null; replyTo?: string | null }));
+    const payment = plugins.payment(c.env as Record<string, unknown>);
+    if (payment) c.set("payment", payment);
     try {
       await next();
     } finally {
@@ -97,7 +111,7 @@ export function createApp(config: ResolvedConfig, snapshot: SchemaSnapshot, opti
   // Registered before the /:collection catch-all so these literal segments
   // never get treated as collection names.
   app.route("/admin/api/auth", authRoutes());
-  app.route("/admin/api/schema", schemaRoute(config, Object.keys(plugins.fieldTypes())));
+  app.route("/admin/api/schema", schemaRoute(config, Object.keys(plugins.fieldTypes()), plugins.subjects()));
   app.route("/admin/api/media", adminMediaRoutes(config));
   app.route("/admin/api/webhooks", adminWebhookRoutes());
   app.route("/admin/api/users", adminUserRoutes(config));
@@ -106,6 +120,10 @@ export function createApp(config: ResolvedConfig, snapshot: SchemaSnapshot, opti
   app.route("/admin/api", adminCrudRoutes(config, plugins));
   // Agent-facing Model Context Protocol server (API-key authenticated).
   app.route("/mcp", mcpRoutes(config));
+  // Business-specific endpoints registered by plugins (Plugin.routes). Mounted
+  // last among API groups, before the catch-all root, so it never shadows a
+  // built-in route.
+  app.route("/api/ext", extensionRoutes(config, plugins));
   // Bare root — a small HTML page for browser navigations (falls through to
   // the JSON 404 for non-HTML clients), since Kalayaan is otherwise headless.
   app.get("/", homeRoute(config));

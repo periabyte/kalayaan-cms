@@ -44,6 +44,7 @@ export default defineConfig({
             { label: "Schema & config", slug: "guides/schema-and-config" },
             { label: "Custom domains", slug: "guides/custom-domains" },
             { label: "Roles & access", slug: "guides/roles-and-access" },
+            { label: "Plugins & modules", slug: "guides/plugins-and-modules" },
             { label: "AI features", slug: "guides/ai-features" },
             { label: "Deployment", slug: "guides/deployment" },
           ],

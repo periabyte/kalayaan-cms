@@ -1,9 +1,10 @@
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { prepareProject } from "../src/project.js";
+import { loadConfig } from "../src/config-loader.js";
 import { runMigrate } from "../src/commands/migrate.js";
 import { readState } from "../src/state.js";
 
@@ -62,6 +63,93 @@ describe("CLI project pipeline (real files, no process spawn)", () => {
     const first = await prepareProject(dir);
     const second = await prepareProject(dir);
     expect(second.wranglerConfig).toEqual(first.wranglerConfig);
+  });
+
+  it("accepts a role granting a plugin-declared custom subject (business-module RBAC)", async () => {
+    await writeFile(
+      join(dir, "cms.plugins.ts"),
+      `
+import type { Plugin } from "kalayaan";
+const plugins: Plugin[] = [{ name: "marketplace", subjects: ["marketplace:order"] }];
+export default plugins;
+`,
+    );
+    await writeFile(
+      join(dir, "cms.config.ts"),
+      `
+import { defineConfig, collection, field } from "kalayaan";
+
+export default defineConfig({
+  name: "e2e-blog",
+  roles: {
+    manager: { permissions: [{ subjects: ["marketplace:order"], actions: ["read", "create"] }] },
+  },
+  collections: [
+    collection("posts", {
+      fields: { title: field.text({ required: true }), slug: field.slug({ from: "title", unique: true }) },
+    }),
+  ],
+});
+`,
+    );
+
+    const loaded = await loadConfig(dir);
+    expect(loaded.resolved.roles.manager?.permissions).toContainEqual({
+      subjects: ["marketplace:order"],
+      actions: ["read", "create"],
+    });
+  });
+
+  it("rejects a role granting an unrecognized subject when no plugin declares it", async () => {
+    await writeFile(
+      join(dir, "cms.config.ts"),
+      `
+import { defineConfig, collection, field } from "kalayaan";
+
+export default defineConfig({
+  name: "e2e-blog",
+  roles: {
+    manager: { permissions: [{ subjects: ["marketplace:order"], actions: ["read"] }] },
+  },
+  collections: [
+    collection("posts", {
+      fields: { title: field.text({ required: true }), slug: field.slug({ from: "title", unique: true }) },
+    }),
+  ],
+});
+`,
+    );
+
+    await expect(loadConfig(dir)).rejects.toThrow(/marketplace:order/);
+  });
+
+  it("merges a module's collections into the resolved config and threads its routes into the generated entry", async () => {
+    await writeFile(
+      join(dir, "cms.modules.ts"),
+      `
+import type { Module } from "kalayaan";
+const modules: Module[] = [{
+  name: "marketplace",
+  collections: [{ name: "orders", fields: { total: { type: "number", required: true } } }],
+  routes: [{ method: "POST", path: "/orders", handler: () => ({}) }],
+}];
+export default modules;
+`,
+    );
+
+    const loaded = await loadConfig(dir);
+    expect(loaded.resolved.collections.map((c) => c.name).sort()).toEqual(["orders", "posts"]);
+
+    const prepared = await prepareProject(dir);
+    expect(existsSync(join(dir, ".kalayaan", "modules.generated.mjs"))).toBe(true);
+    const entry = await readFile(prepared.entryPath, "utf-8");
+    expect(entry).toContain('import modules from "./modules.generated.mjs"');
+    expect(entry).toContain("createApp(resolved, snapshot, { modules })");
+
+    // The merged collection is pure data in the generated config module too —
+    // migrate/doctor/deploy all read collections from there, not cms.modules.ts.
+    const generatedConfig = await readFile(join(dir, ".kalayaan", "config.generated.mjs"), "utf-8");
+    expect(generatedConfig).toContain('"name": "orders"');
   });
 });
 

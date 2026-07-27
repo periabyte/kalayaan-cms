@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { ResolvedConfig } from "@kalayaan/config";
 
 /** The admin UI's single source of truth: fetched once, drives every screen. */
-export function schemaRoute(config: ResolvedConfig, customFieldTypes: string[] = []) {
+export function schemaRoute(config: ResolvedConfig, customFieldTypes: string[] = [], customSubjects: string[] = []) {
   const app = new Hono();
   app.get("/", (c) =>
     c.json({
@@ -22,6 +22,10 @@ export function schemaRoute(config: ResolvedConfig, customFieldTypes: string[] =
         // Plugin-registered custom field types the server can validate, so the
         // admin can tell a known custom type from an unrecognized one.
         customFieldTypes,
+        // Plugin-declared custom permission subjects (e.g. "marketplace:order")
+        // grantable in `roles` — surfaced so a roles/grants UI can list them
+        // alongside collections instead of only knowing about content.
+        customSubjects,
       },
       collections: config.collections.map((c2) => ({
         name: c2.name,

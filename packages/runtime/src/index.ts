@@ -12,3 +12,6 @@ export { UsersStore, type UserRecord, type UserRole } from "./auth/users-store.j
 export { ApiKeysStore, type ApiKeyRecord, type CreateApiKeyInput } from "./auth/api-keys.js";
 export type { Actor, AuthEnv } from "./auth/middleware.js";
 export { MediaStore, type MediaRecord } from "./media/media-store.js";
+// Reference PaymentProvider impl a project's cms.modules.ts constructs directly
+// (unlike AI/Email, there's no Cloudflare-native payment binding to auto-wire).
+export { StripePaymentProvider } from "./payment/stripe-payment-provider.js";

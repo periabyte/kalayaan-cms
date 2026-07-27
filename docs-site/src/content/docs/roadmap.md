@@ -5,8 +5,9 @@ description: What's planned but not yet built in Kalayaan — the open features,
 
 Kalayaan already covers the full path from `cms.config.ts` to a live site on your own Cloudflare
 account — content modelling, drafts and versioning, media, roles and access, localization, AI
-features, GraphQL, and an MCP server. This page tracks what's **planned but not yet built**, so you
-know what to expect before you rely on it.
+features, GraphQL, an MCP server, and a [plugin/module extension seam](/guides/plugins-and-modules)
+for business-specific routes and self-contained features. This page tracks what's **planned but not
+yet built**, so you know what to expect before you rely on it.
 
 It reflects the current state of [`main`](https://github.com/periabyte/kalayaan-cms). Have a request
 or want to help? [Open an issue](https://github.com/periabyte/kalayaan-cms/issues).
@@ -43,6 +44,16 @@ or want to help? [Open an issue](https://github.com/periabyte/kalayaan-cms/issue
   command to embed content that already exists. Search currently embeds each document once, on
   publish.
 
+## Extensibility
+
+- **A worked module example** — the [Plugins & modules](/guides/plugins-and-modules) guide covers
+  the API with snippets, but there's no full example project (e.g. a small marketplace) showing a
+  `Module`'s collections + routes + `PaymentProvider` wired together end-to-end.
+- **Module-level config validation** — a module declaring its own config block (e.g. Stripe keys,
+  fee percentages), validated at resolve time alongside the rest of `cms.config.ts`.
+- **More than one payment provider per project** — today only the first registered module's
+  `provides.payment` factory is used; later ones are silently ignored rather than erroring.
+
 ## Integrations & distribution
 
 - **GraphQL mutations** — the GraphQL API is read-only today (queries resolve relations into nested
@@ -63,7 +74,8 @@ These are internal quality gates, each pending a dedicated CI job:
 
 ---
 
-*Recently shipped:* persistent, field-aware dashboard columns; a branded project home page;
-per-locale editing; machine-translation review; single-document relation population; and enforced
-custom field types. See the [changelog](https://github.com/periabyte/kalayaan-cms/releases) for the
-full history.
+*Recently shipped:* business-specific plugin routes and custom RBAC subjects; the `Module` system
+(build-time collections + a `PaymentProvider` seam) via `cms.modules.ts`; persistent, field-aware
+dashboard columns; a branded project home page; per-locale editing; machine-translation review;
+single-document relation population; and enforced custom field types. See the
+[changelog](https://github.com/periabyte/kalayaan-cms/releases) for the full history.

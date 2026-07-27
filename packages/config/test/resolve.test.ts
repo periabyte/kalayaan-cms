@@ -146,6 +146,26 @@ describe("resolveConfig", () => {
     expect(custom.roles.public).toBeDefined();
   });
 
+  it("rejects a role granting an unknown subject, but accepts one declared via extraSubjects", () => {
+    const withCustomSubject = () =>
+      defineConfig({
+        name: "n",
+        roles: {
+          manager: { permissions: [{ subjects: ["marketplace:order"], actions: ["read", "create"] }] },
+        },
+        collections: [collection("things", { fields: {} })],
+      });
+
+    expect(() => resolveConfig(withCustomSubject())).toThrowError(ConfigError);
+    expect(() => resolveConfig(withCustomSubject())).toThrowError(/marketplace:order/);
+
+    const resolved = resolveConfig(withCustomSubject(), { extraSubjects: ["marketplace:order"] });
+    expect(resolved.roles.manager?.permissions).toContainEqual({
+      subjects: ["marketplace:order"],
+      actions: ["read", "create"],
+    });
+  });
+
   const bad = (mutate: (c: ReturnType<typeof blogConfig>) => void, match: string | RegExp) => {
     const config = blogConfig();
     mutate(config);

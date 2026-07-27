@@ -42,6 +42,15 @@ describe("custom field types", () => {
     const features = schema.features as { customFieldTypes: string[] };
     expect(features.customFieldTypes).toContain("hex");
   });
+
+  it("advertises plugin-declared and route-implied custom subjects on the schema", async () => {
+    const schema = await json(await get("/admin/api/schema"));
+    const features = schema.features as { customSubjects: string[] };
+    // Explicitly declared via Plugin.subjects (not tied to any route).
+    expect(features.customSubjects).toContain("marketplace:order");
+    // Implicitly declared via a route's permission.subject.
+    expect(features.customSubjects).toContain("posts");
+  });
 });
 
 describe("mt-review write path", () => {

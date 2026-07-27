@@ -93,6 +93,13 @@ the SQL to apply the change (`--dry-run` previews; destructive changes need `--a
 **Intelligence (Workers AI, free tier)**
 - AI alt-text, translation, and editorial assist; optional semantic search (Vectorize — paid)
 
+**Extensibility**
+- `cms.plugins.ts`: lifecycle hooks, custom field types, and business-specific HTTP routes
+  (`/api/ext/*`) with an RBAC- and hook-aware data API, plus custom RBAC subjects
+- `cms.modules.ts`: self-contained features — build-time collections + routes/hooks + a
+  `PaymentProvider` seam (Stripe reference impl) — see the
+  [Plugins & modules guide](https://kalayaan.periabyte.dev/guides/plugins-and-modules)
+
 **Access control**
 - Config-defined roles & permissions (an `Ability` model), email/password login, Cloudflare Access
 - Scoped API tokens with granular grants, expiry, and revocation; an audit log
