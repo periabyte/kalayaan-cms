@@ -1,0 +1,82 @@
+---
+/**
+ * The expanded version of the landing page's #features section — one section
+ * per feature, at a real URL so it can rank on its own. The feature list
+ * itself lives in src/data/features.ts and is shared with index.astro; add or
+ * edit features there, never here.
+ */
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import SeoHead from "../components/SeoHead.astro";
+import { features, ICONS, inline } from "../data/features.js";
+import "../styles/landing.css";
+---
+
+<html lang="en" data-theme="light">
+  <head>
+    <SeoHead
+      title="Features — Kalayaan CMS for Cloudflare Workers, D1 & R2"
+      description="Everything Kalayaan CMS ships today: schema-driven admin, D1 or Postgres, Workers AI, REST/GraphQL/MCP APIs, RBAC, media, versions, and locales."
+      canonicalPath="/features/"
+    />
+  </head>
+  <body>
+    <SiteHeader active="features" />
+
+    <section class="ec-section">
+      <div class="ec-wrap ec-page-head" style="max-width:860px">
+        <div class="ec-eyebrow">// the whole platform</div>
+        <h1 class="ec-h1" style="font-size:48px">A real CMS, not a starter kit.</h1>
+        <p class="ec-page-lede">
+          Everything below ships in the current release of Kalayaan CMS — no waitlist, no paid
+          tier gating it. Each one links through to the guide that covers it properly.
+        </p>
+      </div>
+    </section>
+
+    <section class="ec-section">
+      <div class="ec-wrap" style="max-width:860px;padding:20px 40px 72px">
+        {features.map((f) => (
+          <article class="ec-detail" id={f.id}>
+            <div class="ec-feat-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                set:html={ICONS[f.icon]}
+              />
+            </div>
+            <div>
+              <h2 class="ec-detail-title">{f.title}</h2>
+              <div class="ec-detail-body">
+                {f.detail.map((p) => <p set:html={inline(p)} />)}
+              </div>
+              <a class="ec-link ec-mono" href={f.href} style="font-size:13px">› {f.hrefLabel}</a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="ec-section ec-cta">
+      <div class="ec-cta-glow"></div>
+      <div class="ec-wrap ec-cta-inner">
+        <h2 class="ec-h2" style="font-size:42px">All of it, for <em class="ec-accent">$0/month</em>.</h2>
+        <p class="ec-cta-sub">
+          Every feature above runs on your own Cloudflare free tier —
+          <a class="ec-link" href="/pricing/">here's exactly what that covers</a>.
+        </p>
+        <div style="max-width:440px;margin:0 auto" class="ec-command">
+          <div class="ec-command-row">
+            <span class="ec-command-code"><span class="ec-prompt">$</span>npx kalayaan init</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <SiteFooter />
+  </body>
+</html>

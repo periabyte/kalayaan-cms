@@ -1,6 +1,10 @@
 ---
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
+import SeoHead from "../components/SeoHead.astro";
+import JsonLd from "../components/JsonLd.astro";
+import { features, ICONS } from "../data/features.js";
+import { costRows } from "../data/pricing.js";
 import "../styles/landing.css";
 
 const configCode = `import { defineConfig, collection, field } from "kalayaan";
@@ -24,37 +28,6 @@ export default defineConfig({
   ],
 });`;
 
-const features = [
-  { icon: "layout-dashboard", title: "Schema-driven admin", body: "Define content models in cms.config.ts; the admin SPA renders itself — typed fields, relations, and validation." },
-  { icon: "database", title: "Databases your way", body: "D1 is the zero-config default. Bring Postgres or MySQL over Hyperdrive when you outgrow it." },
-  { icon: "sparkles", title: "AI that helps you ship", body: "Alt-text, translation, and editorial assist on Workers AI's free tier — plus optional semantic search." },
-  { icon: "link", title: "Every way to read", body: "A public REST API and config-generated GraphQL, plus an MCP endpoint so agents can query and edit content." },
-  { icon: "users", title: "Roles & real access control", body: "Config-defined roles and permissions, email invites, scoped API tokens with an audit log." },
-  { icon: "layers", title: "Media, versions, locales", body: "Upload to R2 or S3, roll back any change, and localize content across languages from one place." },
-  { icon: "shield-check", title: "Moderated submissions", body: "Accept public contributions behind Cloudflare Turnstile, then approve or reject from the admin queue." },
-  { icon: "globe", title: "Your own domain", body: "Attach any custom domain with automatic DNS and TLS — the site is yours, not a subdomain." },
-];
-
-const ICONS: Record<string, string> = {
-  "layout-dashboard": `<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>`,
-  database: `<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/>`,
-  sparkles: `<path d="M11 3c.4 3 2 4.6 5 5-3 .4-4.6 2-5 5-.4-3-2-4.6-5-5 3-.4 4.6-2 5-5Z"/><path d="M18 14c.2 1.4.9 2.1 2.3 2.3-1.4.2-2.1.9-2.3 2.3-.2-1.4-.9-2.1-2.3-2.3 1.4-.2 2.1-.9 2.3-2.3Z"/>`,
-  link: `<path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><path d="M8 12h8"/>`,
-  users: `<path d="M17 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 5 18.5V20"/><circle cx="9.5" cy="8.5" r="3.5"/><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.36"/><path d="M15 5.13a3.5 3.5 0 0 1 0 6.74"/>`,
-  layers: `<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/>`,
-  "shield-check": `<path d="M12 3 4 6v6c0 4.5 3 7.5 8 9 5-1.5 8-4.5 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/>`,
-  globe: `<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9Z"/>`,
-};
-
-const costRows = [
-  { service: "Workers", does: "runs the CMS admin and serves your API", cost: "$0.00" },
-  { service: "D1", does: "your default SQL database", cost: "$0.00" },
-  { service: "R2", does: "media and file storage", cost: "$0.00" },
-  { service: "KV", does: "cache and edge config", cost: "$0.00" },
-  { service: "Workers Assets", does: "static hosting for the admin SPA", cost: "$0.00" },
-  { service: "Turnstile", does: "spam-free public submissions", cost: "$0.00" },
-];
-
 const terminalLines: Array<{ text: string; cls?: string }> = [
   { text: "$ kalayaan login", cls: "cmd" },
   { text: "→ opening your Cloudflare token page…", cls: "dim" },
@@ -73,18 +46,45 @@ const terminalLines: Array<{ text: string; cls?: string }> = [
   { text: "✓ live at https://blog.example.com", cls: "ok" },
   { text: "  $0.00/mo", cls: "accent" },
 ];
+
+const GITHUB = "https://github.com/periabyte/kalayaan-cms";
+const NPM = "https://www.npmjs.com/package/kalayaan";
+const site = Astro.site!.href;
+
+const description =
+  "Kalayaan CMS is a free, config-driven headless CMS for Cloudflare Workers, D1, and R2. One cms.config.ts, then login → init → deploy to your own account.";
+
+const softwareApplication = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Kalayaan CMS",
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "Cloudflare Workers",
+  url: site,
+  description,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  sameAs: [GITHUB, NPM],
+};
+
+const organization = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Periabyte",
+  url: site,
+  logo: new URL("/assets/logo.svg", site).href,
+  sameAs: [GITHUB, NPM],
+};
 ---
 
 <html lang="en" data-theme="light">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kalayaan — Freedom to deploy.</title>
-    <meta
-      name="description"
-      content="A config-driven, self-deploying headless CMS for Cloudflare. One cms.config.ts and a guided login → init → deploy, and you have a live site — free, on your own domain."
+    <SeoHead
+      title="Kalayaan CMS — Free Headless CMS for Cloudflare Workers, D1 & R2"
+      description={description}
+      canonicalPath="/"
     />
-    <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+    <JsonLd schema={softwareApplication} />
+    <JsonLd schema={organization} />
   </head>
   <body>
     <SiteHeader active="home" />
@@ -200,7 +200,7 @@ const terminalLines: Array<{ text: string; cls?: string }> = [
         </div>
         <div class="ec-feat-grid">
           {features.map((f) => (
-            <div class="ec-feat-card">
+            <a class="ec-feat-card" href={`/features/#${f.id}`}>
               <div class="ec-feat-icon">
                 <svg
                   viewBox="0 0 24 24"
@@ -214,9 +214,12 @@ const terminalLines: Array<{ text: string; cls?: string }> = [
               </div>
               <div class="ec-feat-title">{f.title}</div>
               <div class="ec-feat-body">{f.body}</div>
-            </div>
+            </a>
           ))}
         </div>
+        <p class="ec-section-more">
+          <a class="ec-link ec-mono" href="/features/">› every feature, in detail</a>
+        </p>
       </div>
     </section>
 
@@ -244,7 +247,10 @@ const terminalLines: Array<{ text: string; cls?: string }> = [
             </div>
           ))}
         </div>
-        <p class="ec-cost-foot">// free tier limits apply — see the docs for D1 / R2 / Workers quotas.</p>
+        <p class="ec-cost-foot">// free tier limits apply — every allowance is itemised on the pricing page.</p>
+        <p class="ec-section-more">
+          <a class="ec-link ec-mono" href="/pricing/">› the actual free-tier limits, and when you'd start paying</a>
+        </p>
       </div>
     </section>
 

@@ -1,6 +1,6 @@
 ---
 interface Props {
-  active?: "home" | "about";
+  active?: "home" | "about" | "features" | "pricing";
 }
 const { active } = Astro.props;
 ---
@@ -13,10 +13,10 @@ const { active } = Astro.props;
     </a>
     <nav class="ec-nav-links">
       <a class="ec-link" href="/#how">How it works</a>
-      <a class="ec-link" href="/#features">Features</a>
-      <a class="ec-link" href="/#cost">Cost</a>
+      <a class="ec-link" href="/features/" aria-current={active === "features" ? "page" : undefined}>Features</a>
+      <a class="ec-link" href="/pricing/" aria-current={active === "pricing" ? "page" : undefined}>Pricing</a>
       <a class="ec-link" href="/guides/quickstart/">Docs</a>
-      <a class="ec-link" href="/about" aria-current={active === "about" ? "page" : undefined}>About</a>
+      <a class="ec-link" href="/about/" aria-current={active === "about" ? "page" : undefined}>About</a>
     </nav>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
       <button type="button" class="ec-theme-toggle" id="ec-theme-toggle" aria-label="Toggle theme">

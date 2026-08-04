@@ -1,0 +1,154 @@
+---
+/**
+ * The expanded version of the landing page's #cost section — the same table,
+ * plus each service's actual Cloudflare free-tier allowance and an honest
+ * account of what would push you past it. The numbers live in
+ * src/data/pricing.ts and are shared with index.astro; edit them there.
+ */
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import SeoHead from "../components/SeoHead.astro";
+import JsonLd from "../components/JsonLd.astro";
+import { costRows, notFree } from "../data/pricing.js";
+import "../styles/landing.css";
+
+const site = Astro.site!.href;
+
+/* The Offer is the whole point of this page, so state it as structured data
+   too — same SoftwareApplication entity as the one on the landing page. */
+const offer = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Kalayaan CMS",
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "Cloudflare Workers",
+  url: new URL("/pricing/", site).href,
+  description:
+    "Kalayaan CMS is free. It runs on your own Cloudflare account, entirely within the free tier of Workers, D1, R2, KV, Workers AI, and Turnstile.",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    availability: "https://schema.org/InStock",
+  },
+  sameAs: [
+    "https://github.com/periabyte/kalayaan-cms",
+    "https://www.npmjs.com/package/kalayaan",
+  ],
+};
+---
+
+<html lang="en" data-theme="light">
+  <head>
+    <SeoHead
+      title="Kalayaan CMS Pricing — Free, $0/month on Cloudflare's Free Tier"
+      description="Kalayaan CMS costs $0. See every Cloudflare free-tier limit it runs inside — Workers, D1, R2, KV, Workers AI, Turnstile — and when you'd start paying."
+      canonicalPath="/pricing/"
+    />
+    <JsonLd schema={offer} />
+  </head>
+  <body>
+    <SiteHeader active="pricing" />
+
+    <section class="ec-section">
+      <div class="ec-wrap ec-page-head" style="max-width:860px">
+        <div class="ec-eyebrow">// honest cost</div>
+        <h1 class="ec-h1" style="font-size:48px">Kalayaan CMS pricing: <em class="ec-accent">$0</em></h1>
+        <div class="ec-price-hero">$0<span style="font-size:0.3em;color:var(--text-3)">/mo</span></div>
+        <p class="ec-page-lede">
+          There is no paid plan, no seat pricing, and no trial that expires. Kalayaan CMS is open
+          source and deploys onto <strong>your own</strong> Cloudflare account, so the only bill
+          that could ever exist is Cloudflare's — and every service it uses has a permanent free
+          tier. Below is each one, with the real allowance and an honest note on what would push
+          you past it.
+        </p>
+      </div>
+    </section>
+
+    <section class="ec-section ec-section-alt">
+      <div class="ec-wrap ec-section-inner" style="max-width:860px">
+        <div class="ec-section-head">
+          <h2 class="ec-h2" style="font-size:28px">What it costs, service by service</h2>
+        </div>
+        <div class="ec-cost-table">
+          <div class="ec-cost-row ec-cost-head">
+            <div>cloudflare service</div>
+            <div>what it runs</div>
+            <div>cost / mo</div>
+          </div>
+          {costRows.map((r) => (
+            <div class="ec-cost-row">
+              <div class="ec-cost-service">{r.service}</div>
+              <div class="ec-cost-does">{r.does}</div>
+              <div class="ec-cost-price">{r.cost}</div>
+            </div>
+          ))}
+        </div>
+        <p class="ec-cost-foot">// total: $0.00 / month</p>
+      </div>
+    </section>
+
+    <section class="ec-section">
+      <div class="ec-wrap ec-section-inner" style="max-width:860px">
+        <div class="ec-section-head">
+          <div class="ec-eyebrow">// the actual limits</div>
+          <h2 class="ec-h2" style="font-size:28px">The free tier, itemised</h2>
+          <p class="ec-section-lede">
+            These are Cloudflare's published allowances, not our estimates — each card links to the
+            page it came from so you can check it yourself.
+          </p>
+        </div>
+        {costRows.map((r) => (
+          <div class="ec-tier">
+            <div class="ec-tier-head">
+              <span class="ec-tier-name">{r.service}</span>
+              <span class="ec-tier-price">{r.cost}</span>
+            </div>
+            <p class="ec-tier-does">{r.does}</p>
+            <ul class="ec-tier-limits">
+              {r.limits.map((l) => <li>{l}</li>)}
+            </ul>
+            <p class="ec-tier-when"><b>When you'd pay:</b> {r.whenYouPay}</p>
+            <a class="ec-link ec-tier-docs" href={r.docs} target="_blank" rel="noopener">
+              › Cloudflare's limits for {r.service}
+            </a>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="ec-section ec-section-alt">
+      <div class="ec-wrap ec-section-inner" style="max-width:860px">
+        <div class="ec-section-head">
+          <div class="ec-eyebrow">// no asterisks</div>
+          <h2 class="ec-h2" style="font-size:28px">What isn't free</h2>
+          <p class="ec-section-lede">
+            Three things cost money. None of them are required to run a Kalayaan CMS site, and
+            none of them are hidden until after you've committed.
+          </p>
+        </div>
+        {notFree.map((c) => (
+          <div class="ec-caveat">
+            <div class="ec-caveat-title">{c.title}</div>
+            <div class="ec-caveat-body">{c.body}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="ec-section ec-cta">
+      <div class="ec-cta-glow"></div>
+      <div class="ec-wrap ec-cta-inner">
+        <h2 class="ec-h2" style="font-size:42px">No card. No trial. <em class="ec-accent">No bill.</em></h2>
+        <p class="ec-cta-sub">Sign in to Cloudflare once, answer a few questions, deploy.</p>
+        <div style="max-width:440px;margin:0 auto" class="ec-command">
+          <div class="ec-command-row">
+            <span class="ec-command-code"><span class="ec-prompt">$</span>npx kalayaan init</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <SiteFooter />
+  </body>
+</html>

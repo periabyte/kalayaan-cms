@@ -473,6 +473,8 @@ code {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
+/* Rendered as an <a> into /features#<id> — the reset keeps it looking like
+   the card it was before the expanded features page existed. */
 .ec-feat-card {
   background: var(--surface-1);
   border: 1px solid var(--border);
@@ -481,6 +483,17 @@ code {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.ec-feat-card:hover {
+  border-color: var(--accent-border);
+  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ec-feat-card { transition: none; }
+  .ec-feat-card:hover { transform: none; }
 }
 .ec-feat-icon {
   width: 38px;
@@ -673,6 +686,171 @@ code {
   }
 }
 
+/* ── /features and /pricing ──────────────────────────────────────────────
+   The expanded, individually-indexable versions of the landing page's
+   #features and #cost sections. They reuse the section/table primitives
+   above; what follows is only what those two pages add. */
+
+/* "› read more" link that closes out a landing-page section. */
+.ec-section-more {
+  margin: 22px 0 0;
+  font-size: 13px;
+}
+
+/* Page header shared by /features, /pricing, and /about-style pages. */
+.ec-page-head {
+  padding: 76px 40px 8px;
+}
+.ec-page-lede {
+  font-size: 17.5px;
+  line-height: 1.65;
+  color: var(--text-2);
+  max-width: 640px;
+  margin: 20px 0 0;
+}
+
+/* One expanded feature: icon + heading, then prose and a guide link. */
+.ec-detail {
+  border-top: 1px solid var(--border);
+  padding: 34px 0;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 20px;
+  /* Anchored from the landing cards — clear the sticky header. */
+  scroll-margin-top: 88px;
+}
+.ec-detail-title {
+  font-family: "Figtree", ui-sans-serif, sans-serif;
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: -0.015em;
+  color: var(--text-1);
+  margin: 4px 0 14px;
+}
+.ec-detail-body p {
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--text-2);
+  margin: 0 0 12px;
+}
+.ec-detail-body code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.88em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.ec-detail-body strong {
+  color: var(--text-1);
+  font-weight: 700;
+}
+
+/* One service's free-tier allowance on /pricing. */
+.ec-tier {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-1);
+  padding: 24px 26px;
+  margin-bottom: 14px;
+}
+.ec-tier-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.ec-tier-name {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-1);
+}
+.ec-tier-price {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.ec-tier-does {
+  font-size: 14px;
+  color: var(--text-3);
+  margin: 0 0 16px;
+}
+.ec-tier-limits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: grid;
+  gap: 7px;
+}
+.ec-tier-limits li {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+  padding-left: 22px;
+  position: relative;
+}
+.ec-tier-limits li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+.ec-tier-when {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-3);
+  border-left: 2px solid var(--border-strong);
+  padding: 2px 0 2px 14px;
+  margin: 0 0 14px;
+}
+.ec-tier-when b {
+  color: var(--text-2);
+  font-weight: 600;
+}
+.ec-tier-docs {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+}
+
+/* The honest "this part isn't free" callouts. */
+.ec-caveat {
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+}
+.ec-caveat-title {
+  font-family: "Figtree", ui-sans-serif, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-1);
+  margin-bottom: 6px;
+}
+.ec-caveat-body {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+
+/* The $0 headline on /pricing. */
+.ec-price-hero {
+  font-family: "Cubao Free", "Spectral", ui-serif, serif;
+  font-size: 92px;
+  line-height: 1;
+  color: var(--accent);
+  margin: 28px 0 0;
+}
+
 @media (max-width: 900px) {
   .ec-two { grid-template-columns: 1fr !important; }
   .ec-nav-links { display: none !important; }
@@ -687,4 +865,7 @@ code {
   .ec-cost-row { grid-template-columns: 1fr 0.8fr !important; }
   .ec-cost-row > div:nth-child(2) { display: none !important; }
   .ec-footer-grid { grid-template-columns: 1fr 1fr !important; }
+  .ec-page-head { padding: 56px 20px 8px !important; }
+  .ec-detail { grid-template-columns: 1fr !important; }
+  .ec-price-hero { font-size: 64px !important; }
 }
