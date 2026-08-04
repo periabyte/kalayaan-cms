@@ -32,16 +32,16 @@
     "@kalayaan/config": "workspace:*",
     "@kalayaan/core": "workspace:*",
     "@kalayaan/storage-r2": "workspace:*",
-    "hono": "^4.12.31",
+    "hono": "^4.12.33",
     "zod": "^4.4.3",
     "@kalayaan/adapter-postgres": "workspace:*",
     "@kalayaan/adapter-mysql": "workspace:*",
-    "graphql": "^16.9.0"
+    "graphql": "^17.0.2"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.12.0",
-    "@cloudflare/workers-types": "^4.20260702.1",
+    "@cloudflare/vitest-pool-workers": "0.20.1",
+    "@cloudflare/workers-types": "^5.20260801.1",
     "tsup": "^8.4.0",
-    "vitest": "^3.1.0"
+    "vitest": "^4.1.10"
   }
 }
