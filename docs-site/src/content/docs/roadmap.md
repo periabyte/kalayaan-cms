@@ -1,6 +1,13 @@
 ---
 title: Roadmap
-description: What's planned but not yet built in Kalayaan — the open features, grouped by area.
+description: "What is planned but not yet built in Kalayaan CMS, grouped by area — so you know what to expect before you rely on it."
+# Sidebar label and page H1 stay short (title above); this overrides just
+# the <title> tag, which leads with the category for search. Starlight
+# merges frontmatter head last and dedupes by tag, so this replaces its
+# default `<title>` rather than adding a second one.
+head:
+  - tag: title
+    content: "Roadmap — What Is Planned Next | Kalayaan CMS"
 ---
 
 Kalayaan already covers the full path from `cms.config.ts` to a live site on your own Cloudflare

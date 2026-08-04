@@ -1,0 +1,18 @@
+---
+/**
+ * Serialises a schema.org node into a `<script type="application/ld+json">`.
+ * Pass one object per node — Google reads multiple ld+json blocks on a page
+ * fine, so there's no need to wrap them in an @graph.
+ */
+interface Props {
+  schema: Record<string, unknown>;
+}
+
+const { schema } = Astro.props;
+
+/* `</script>` inside a JSON string value would close the tag early; escaping
+   the forward slash keeps it valid JSON and inert as markup. */
+const json = JSON.stringify(schema).replace(/</g, "\\u003c");
+---
+
+<script type="application/ld+json" is:inline set:html={json} />

@@ -1,6 +1,13 @@
 ---
 title: Plugins & modules
-description: Lifecycle hooks, custom field types, business-specific routes, custom RBAC subjects, and installable modules.
+description: "Extend Kalayaan CMS with lifecycle hooks, custom field types, business-specific routes, custom RBAC subjects, and installable modules."
+# Sidebar label and page H1 stay short (title above); this overrides just
+# the <title> tag, which leads with the category for search. Starlight
+# merges frontmatter head last and dedupes by tag, so this replaces its
+# default `<title>` rather than adding a second one.
+head:
+  - tag: title
+    content: "Plugins, Lifecycle Hooks & Custom Field Types | Kalayaan CMS"
 ---
 
 Kalayaan's config (`cms.config.ts`) covers content modeling, but a real project usually needs more:

@@ -1,6 +1,13 @@
 ---
 title: Schema & config
-description: Everything in Kalayaan is derived from one cms.config.ts.
+description: "Define collections, fields, and relations in one typed cms.config.ts — Kalayaan CMS derives the admin UI, REST/GraphQL APIs, and DB schema from it."
+# Sidebar label and page H1 stay short (title above); this overrides just
+# the <title> tag, which leads with the category for search. Starlight
+# merges frontmatter head last and dedupes by tag, so this replaces its
+# default `<title>` rather than adding a second one.
+head:
+  - tag: title
+    content: "Config-Driven Content Schemas in TypeScript (cms.config.ts) | Kalayaan CMS"
 ---
 
 Everything — the admin UI, the REST/GraphQL APIs, and the database schema — is derived from a

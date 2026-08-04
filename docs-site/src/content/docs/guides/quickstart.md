@@ -1,6 +1,13 @@
 ---
 title: Quickstart
-description: From an empty folder to a live site on your own Cloudflare account.
+description: "Deploy Kalayaan CMS to your own Cloudflare account in five minutes — login, init, deploy. Workers, D1, R2, and KV, all on the permanent free tier."
+# Sidebar label and page H1 stay short (title above); this overrides just
+# the <title> tag, which leads with the category for search. Starlight
+# merges frontmatter head last and dedupes by tag, so this replaces its
+# default `<title>` rather than adding a second one.
+head:
+  - tag: title
+    content: "Quickstart: Deploy a Headless CMS to Cloudflare in 5 Minutes | Kalayaan CMS"
 ---
 
 Kalayaan deploys entirely onto your own Cloudflare account — Workers, D1, R2, and KV, all on the

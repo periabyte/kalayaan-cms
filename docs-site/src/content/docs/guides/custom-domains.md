@@ -1,6 +1,13 @@
 ---
 title: Custom domains
-description: Serve your Kalayaan site on your own domain instead of *.workers.dev.
+description: "Serve your Kalayaan CMS site on your own domain instead of *.workers.dev — DNS records and TLS certificates are provisioned automatically."
+# Sidebar label and page H1 stay short (title above); this overrides just
+# the <title> tag, which leads with the category for search. Starlight
+# merges frontmatter head last and dedupes by tag, so this replaces its
+# default `<title>` rather than adding a second one.
+head:
+  - tag: title
+    content: "Attach a Custom Domain with Automatic DNS & TLS | Kalayaan CMS"
 ---
 
 By default, `kalayaan deploy` serves your site on a free `*.workers.dev` URL. To use your own

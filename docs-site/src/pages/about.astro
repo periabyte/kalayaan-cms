@@ -1,19 +1,18 @@
 ---
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
+import SeoHead from "../components/SeoHead.astro";
 import "../styles/landing.css";
 ---
 
 <html lang="en" data-theme="light">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>About — Kalayaan</title>
-    <meta
-      name="description"
-      content="Why Kalayaan exists: your idea, on your own domain, running free — no budget required to start."
+    <SeoHead
+      title="About Kalayaan CMS — Why a Zero-Cost CMS Exists"
+      description="Why Kalayaan CMS exists: your idea, on your own domain, running free — no budget required to start, and no seat pricing ever."
+      canonicalPath="/about/"
+      ogType="article"
     />
-    <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
   </head>
   <body>
     <SiteHeader active="about" />

@@ -1,0 +1,58 @@
+---
+/**
+ * Starlight `Head` override — renders Starlight's own head untouched, then
+ * appends a BreadcrumbList JSON-LD node for the current docs page.
+ *
+ * Chosen over a `PageTitle` override because the breadcrumb is metadata, not
+ * visible chrome: overriding `PageTitle` would mean re-implementing the `<h1>`
+ * markup and its `data-page-title` hook just to hang a script tag off it,
+ * whereas this component adds to `<head>` and changes nothing that renders.
+ * Wired up via `components: { Head }` in astro.config.mjs.
+ */
+import Default from "@astrojs/starlight/components/Head.astro";
+import JsonLd from "./JsonLd.astro";
+import type { Props } from "@astrojs/starlight/props";
+
+const { entry } = Astro.props as Props;
+
+const site = Astro.site!;
+/* "/guides/quickstart/" → ["guides", "quickstart"] */
+const segments = Astro.url.pathname.split("/").filter(Boolean);
+
+/**
+ * Labels and landing URLs for the intermediate path segments. `/guides/` is
+ * not itself a page, so the section crumb points at the first guide — the
+ * same target as the header's "Docs" link. Every `item` must resolve to a
+ * real URL or Google rejects the breadcrumb.
+ */
+const SECTIONS: Record<string, { name: string; item: string }> = {
+  guides: { name: "Guides", item: new URL("/guides/quickstart/", site).href },
+};
+
+const self = new URL(`${segments.join("/")}/`, site).href;
+
+const crumbs = [{ name: "Home", item: site.href }];
+for (const [i, segment] of segments.entries()) {
+  if (i === segments.length - 1) {
+    crumbs.push({ name: entry.data.title, item: self });
+  } else if (SECTIONS[segment] && SECTIONS[segment].item !== self) {
+    // On /guides/quickstart/ the section crumb *is* this page — emitting it
+    // would repeat the same URL twice in the list, which Google flags.
+    crumbs.push(SECTIONS[segment]);
+  }
+}
+
+const breadcrumbs = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: crumbs.map((crumb, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: crumb.name,
+    item: crumb.item,
+  })),
+};
+---
+
+<Default {...Astro.props}><slot /></Default>
+<JsonLd schema={breadcrumbs} />

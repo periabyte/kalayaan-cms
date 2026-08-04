@@ -23,6 +23,9 @@ importers:
 
   docs-site:
     dependencies:
+      '@astrojs/sitemap':
+        specifier: ^3.7.3
+        version: 3.7.3
       '@astrojs/starlight':
         specifier: ^0.30.0
         version: 0.30.6(astro@5.18.2(@types/node@24.13.3)(aws4fetch@1.0.20)(jiti@1.21.7)(rollup@4.62.2)(typescript@5.9.3)(yaml@2.9.0))

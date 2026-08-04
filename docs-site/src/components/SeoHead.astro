@@ -1,0 +1,56 @@
+---
+/**
+ * The shared `<head>` for the custom (non-Starlight) pages — /, /about,
+ * /pricing, /features. Starlight's own pages get the equivalent from its
+ * `Head` component plus the `head` array in astro.config.mjs; don't render
+ * this there or you'll end up with two titles and two canonicals.
+ *
+ * The canonical and OG URLs are built from `Astro.site` so the origin lives
+ * in exactly one place (astro.config.mjs) rather than being hard-coded here.
+ */
+interface Props {
+  /** Full `<title>` — lead with the category, not the tagline. */
+  title: string;
+  /** Under 155 characters. */
+  description: string;
+  /** Site-root-relative, with a trailing slash: "/", "/pricing/". */
+  canonicalPath: string;
+  /** Site-root-relative path to the share card. */
+  ogImage?: string;
+  ogType?: "website" | "article";
+}
+
+const {
+  title,
+  description,
+  canonicalPath,
+  ogImage = "/og.png",
+  ogType = "website",
+} = Astro.props;
+
+const canonical = new URL(canonicalPath, Astro.site).href;
+const ogImageUrl = new URL(ogImage, Astro.site).href;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content="Kalayaan CMS" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl} />
+
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />

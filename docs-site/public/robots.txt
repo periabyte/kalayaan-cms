@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kalayaan.periabyte.dev/sitemap-index.xml

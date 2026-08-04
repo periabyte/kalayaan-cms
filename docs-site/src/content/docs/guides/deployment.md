@@ -1,6 +1,13 @@
 ---
 title: Deployment
-description: How kalayaan deploy provisions Cloudflare, and how to automate it in CI.
+description: "How kalayaan deploy provisions Workers, D1, R2, and KV on your Cloudflare account, applies migrations, and runs in CI. Kalayaan CMS documentation."
+# Sidebar label and page H1 stay short (title above); this overrides just
+# the <title> tag, which leads with the category for search. Starlight
+# merges frontmatter head last and dedupes by tag, so this replaces its
+# default `<title>` rather than adding a second one.
+head:
+  - tag: title
+    content: "Deploying a CMS to Cloudflare Workers, D1, R2 & KV | Kalayaan CMS"
 ---
 
 ## What `kalayaan deploy` does

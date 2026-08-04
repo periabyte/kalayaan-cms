@@ -1,6 +1,13 @@
 ---
 title: Roles & access
-description: Config-defined roles, scoped API tokens, and public/anonymous access.
+description: "Config-defined roles and permissions in Kalayaan CMS, plus scoped API tokens with expiry, revocation, an audit log, and public/anonymous access."
+# Sidebar label and page H1 stay short (title above); this overrides just
+# the <title> tag, which leads with the category for search. Starlight
+# merges frontmatter head last and dedupes by tag, so this replaces its
+# default `<title>` rather than adding a second one.
+head:
+  - tag: title
+    content: "Role-Based Access Control & Scoped API Tokens | Kalayaan CMS"
 ---
 
 Every request in Kalayaan — whether it's a logged-in editor, an API key, or an anonymous visitor —

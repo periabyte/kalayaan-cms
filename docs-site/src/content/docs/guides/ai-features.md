@@ -1,6 +1,13 @@
 ---
 title: AI features
-description: Alt-text, translation, editorial assist, and optional semantic search — powered by Workers AI.
+description: "Kalayaan CMS runs alt-text, translation, and editorial assist on Workers AI free tier — no API key. Semantic search via Vectorize is optional."
+# Sidebar label and page H1 stay short (title above); this overrides just
+# the <title> tag, which leads with the category for search. Starlight
+# merges frontmatter head last and dedupes by tag, so this replaces its
+# default `<title>` rather than adding a second one.
+head:
+  - tag: title
+    content: "AI Alt-Text, Translation & Semantic Search with Workers AI | Kalayaan CMS"
 ---
 
 Kalayaan's AI features run on Workers AI — no separate API key or third-party account to set up.
