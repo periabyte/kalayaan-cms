@@ -19,9 +19,24 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Highlight from "@tiptap/extension-highlight";
 
-/** Override for local development against `kalayaan dev`. */
+/**
+ * Public origin for media the browser loads — the custom domain.
+ * Override for local development against `kalayaan dev`.
+ */
 export const CMS_URL = (
   import.meta.env.CMS_URL ?? "https://kalayaan-admin.periabyte.dev"
+).replace(/\/$/, "");
+
+/**
+ * Origin the *build* reads the API from, which is deliberately not the custom
+ * domain. kalayaan-admin.periabyte.dev sits behind the zone's bot/WAF settings,
+ * and those reject the datacenter IPs GitHub Actions runs on — the first CI
+ * build after this landed got a 403 while the same request from a laptop got
+ * 200. The workers.dev hostname serves the same Worker without zone-level
+ * rules in front of it, so it's the reliable origin for machine reads.
+ */
+const CMS_API_URL = (
+  import.meta.env.CMS_API_URL ?? "https://kalayaan-docs.periabytes.workers.dev"
 ).replace(/\/$/, "");
 
 export interface Media {
@@ -85,12 +100,26 @@ export function renderBody(body: unknown): string {
   }
 }
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${CMS_URL}/api/v1${path}`);
+async function get<T>(path: string, attempt = 1): Promise<T> {
+  const res = await fetch(`${CMS_API_URL}/api/v1${path}`, {
+    // Default `undici` sends no User-Agent, which is itself a bot signal to
+    // some edge rules. Identify the caller honestly instead.
+    headers: { "user-agent": "kalayaan-docs-site build (+https://kalayaan.periabyte.dev)" },
+  });
+
   if (!res.ok) {
+    // One retry on 5xx/429 — a cold Worker or a rate limit shouldn't take the
+    // whole docs deploy down. 4xx is a real misconfiguration; fail immediately.
+    if (attempt === 1 && (res.status >= 500 || res.status === 429)) {
+      await new Promise((r) => setTimeout(r, 2000));
+      return get<T>(path, 2);
+    }
+    // The status alone doesn't distinguish "the CMS said no" from "Cloudflare
+    // blocked us before the Worker ever ran" — the body does, so include it.
+    const body = (await res.text().catch(() => "")).slice(0, 300);
     throw new Error(
-      `CMS request failed: GET ${path} → ${res.status} ${res.statusText}. ` +
-        `Is ${CMS_URL} reachable?`,
+      `CMS request failed: GET ${path} → ${res.status} ${res.statusText} ` +
+        `(origin ${CMS_API_URL}).\nResponse body: ${body || "<empty>"}`,
     );
   }
   return (await res.json()) as T;
