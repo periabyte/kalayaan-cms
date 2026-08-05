@@ -12,6 +12,15 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
     "@astrojs/starlight": "^0.30.0",
+    "@tiptap/extension-highlight": "^2.27.2",
+    "@tiptap/extension-image": "^2.27.2",
+    "@tiptap/extension-link": "^2.27.2",
+    "@tiptap/extension-task-item": "^2.27.2",
+    "@tiptap/extension-task-list": "^2.27.2",
+    "@tiptap/extension-text-align": "^2.27.2",
+    "@tiptap/extension-underline": "^2.27.2",
+    "@tiptap/html": "^2.27.2",
+    "@tiptap/starter-kit": "^2.27.2",
     "astro": "^5.0.0",
     "astro-expressive-code": "^0.38.3",
     "sharp": "^0.33.5"

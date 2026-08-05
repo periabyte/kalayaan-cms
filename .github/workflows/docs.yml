@@ -5,6 +5,12 @@ on:
     branches: [main]
     paths: ["docs-site/**", ".github/workflows/docs.yml"]
   workflow_dispatch:
+  # Publishing a post in the CMS (kalayaan-admin.periabyte.dev) fires a webhook
+  # at GitHub's dispatches endpoint with this event type, which rebuilds the
+  # site against the new content. This is what makes blog content editable
+  # without a commit — the build pulls posts from the CMS at build time.
+  repository_dispatch:
+    types: [cms-publish]
 
 permissions:
   contents: read

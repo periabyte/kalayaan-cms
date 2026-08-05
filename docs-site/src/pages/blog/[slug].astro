@@ -1,0 +1,74 @@
+---
+/**
+ * A single post, rendered from CMS content at build time.
+ *
+ * `seo_title` and `description` come straight from the post's own fields, so
+ * an editor controls this page's search appearance without touching the repo.
+ * The CMS caps `description` at 155 characters, which is the same limit
+ * scripts/check-seo.mjs enforces after the build.
+ */
+import SiteHeader from "../../components/SiteHeader.astro";
+import SiteFooter from "../../components/SiteFooter.astro";
+import SeoHead from "../../components/SeoHead.astro";
+import { getPosts, renderBody, mediaUrl, formatDate, type Post } from "../../lib/cms";
+import "../../styles/landing.css";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({ params: { slug: post.slug }, props: { post } }));
+}
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const html = renderBody(post.body);
+const cover = mediaUrl(post.cover);
+---
+
+<html lang="en" data-theme="light">
+  <head>
+    <SeoHead
+      title={post.seo_title || `${post.title} | Kalayaan CMS`}
+      description={post.description}
+      canonicalPath={`/blog/${post.slug}/`}
+      ogType="article"
+      ogImage={cover ?? "/og.png"}
+    />
+  </head>
+  <body>
+    <SiteHeader active="blog" />
+
+    <section class="ec-section">
+      <div class="ec-wrap ec-page-head" style="max-width:760px">
+        <div class="ec-eyebrow">
+          <a class="ec-link" href="/blog/">// blog</a>
+        </div>
+        <h1 class="ec-h1" style="font-size:44px">{post.title}</h1>
+        <div class="ec-mono" style="font-size:13px;opacity:.7">
+          <time datetime={new Date(post.published_at).toISOString()}>
+            {formatDate(post.published_at)}
+          </time>
+          {post.author?.name && <span> · {post.author.name}</span>}
+          {post.tags?.length ? <span> · {post.tags.map((t) => t.name).join(", ")}</span> : null}
+        </div>
+      </div>
+    </section>
+
+    <section class="ec-section">
+      <div class="ec-wrap" style="max-width:760px;padding:8px 40px 72px">
+        {cover && (
+          <img
+            src={cover}
+            alt={post.cover?.alt ?? ""}
+            style="width:100%;border-radius:12px;margin-bottom:32px"
+          />
+        )}
+        <div class="ec-detail-body ec-post-body" set:html={html} />
+      </div>
+    </section>
+
+    <SiteFooter />
+  </body>
+</html>

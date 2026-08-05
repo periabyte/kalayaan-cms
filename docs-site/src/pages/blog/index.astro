@@ -1,0 +1,72 @@
+---
+/**
+ * Blog index — every post comes from the Kalayaan CMS at
+ * kalayaan-admin.periabyte.dev, fetched at build time. Nothing on this page is
+ * authored in this repo: to publish, write in the admin and hit Publish, which
+ * webhooks this site into rebuilding.
+ */
+import SiteHeader from "../../components/SiteHeader.astro";
+import SiteFooter from "../../components/SiteFooter.astro";
+import SeoHead from "../../components/SeoHead.astro";
+import { getPosts, mediaUrl, formatDate } from "../../lib/cms";
+import "../../styles/landing.css";
+
+const posts = await getPosts();
+---
+
+<html lang="en" data-theme="light">
+  <head>
+    <SeoHead
+      title="Blog — Building a Zero-Cost Headless CMS on Cloudflare"
+      description="Notes from building Kalayaan CMS: Cloudflare Workers, D1, R2, edge architecture, and what it takes to self-host a CMS for free."
+      canonicalPath="/blog/"
+    />
+  </head>
+  <body>
+    <SiteHeader active="blog" />
+
+    <section class="ec-section">
+      <div class="ec-wrap ec-page-head" style="max-width:860px">
+        <div class="ec-eyebrow">// notes from the build</div>
+        <h1 class="ec-h1" style="font-size:48px">Blog</h1>
+        <p class="ec-page-lede">
+          Working notes on building and running Kalayaan — architecture decisions, Cloudflare's
+          free tier in practice, and the parts that turned out harder than they looked.
+        </p>
+      </div>
+    </section>
+
+    <section class="ec-section">
+      <div class="ec-wrap" style="max-width:860px;padding:20px 40px 72px">
+        {posts.length === 0 && (
+          <p class="ec-detail-body">
+            No posts yet — the first one is being written. In the meantime, the
+            <a class="ec-link" href="/guides/quickstart/">quickstart</a> is the fastest way in.
+          </p>
+        )}
+
+        {posts.map((post) => (
+          <article class="ec-detail">
+            <div>
+              <h2 class="ec-detail-title">
+                <a class="ec-link" href={`/blog/${post.slug}/`}>{post.title}</a>
+              </h2>
+              <div class="ec-mono" style="font-size:13px;opacity:.7;margin-bottom:8px">
+                <time datetime={new Date(post.published_at).toISOString()}>
+                  {formatDate(post.published_at)}
+                </time>
+                {post.author?.name && <span> · {post.author.name}</span>}
+              </div>
+              <div class="ec-detail-body"><p>{post.description}</p></div>
+              <a class="ec-link ec-mono" href={`/blog/${post.slug}/`} style="font-size:13px">
+                › Read the post
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <SiteFooter />
+  </body>
+</html>

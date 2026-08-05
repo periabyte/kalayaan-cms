@@ -869,3 +869,49 @@ code {
   .ec-detail { grid-template-columns: 1fr !important; }
   .ec-price-hero { font-size: 64px !important; }
 }
+
+/* ---------------------------------------------------------------------------
+   Post body — CMS-authored rich text (TipTap JSON rendered to HTML at build).
+   Element selectors rather than utility classes, because the markup comes from
+   the editor and can't carry classes of ours. Only the nodes the editor can
+   actually produce are styled; see docs-site/src/lib/cms.ts for that list.
+--------------------------------------------------------------------------- */
+.ec-post-body > * + * { margin-top: 1.1em; }
+.ec-post-body h2 { font-size: 28px; font-weight: 650; margin-top: 1.8em; letter-spacing: -0.01em; }
+.ec-post-body h3 { font-size: 21px; font-weight: 650; margin-top: 1.5em; }
+.ec-post-body ul, .ec-post-body ol { padding-left: 1.35em; }
+.ec-post-body li + li { margin-top: 0.35em; }
+.ec-post-body ul { list-style: disc; }
+.ec-post-body ol { list-style: decimal; }
+/* Task lists render as <ul data-type="taskList"> with real checkboxes, so they
+   need the marker and indent removed or they get bullets *and* boxes. */
+.ec-post-body ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+.ec-post-body ul[data-type="taskList"] li { display: flex; gap: 8px; align-items: baseline; }
+.ec-post-body ul[data-type="taskList"] p { margin: 0; }
+.ec-post-body blockquote {
+  border-left: 3px solid var(--border-strong);
+  padding-left: 18px;
+  color: var(--text-2);
+}
+.ec-post-body code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.9em;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+/* Code blocks sit on the fixed dark --surface-code in both themes, like the
+   terminal panels above — hence --code-text rather than --text-1. */
+.ec-post-body pre {
+  background: var(--surface-code);
+  color: var(--code-text);
+  padding: 18px 20px;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+.ec-post-body pre code { background: none; border: 0; padding: 0; color: inherit; }
+.ec-post-body hr { border: 0; border-top: 1px solid var(--border); margin: 2.2em 0; }
+.ec-post-body .rte-image { max-width: 100%; border-radius: 10px; }
+.ec-post-body mark { background: var(--accent-soft); padding: 0 3px; border-radius: 3px; }
+.ec-post-body a { color: var(--accent); }

@@ -1,6 +1,6 @@
 ---
 interface Props {
-  active?: "home" | "about" | "features" | "pricing";
+  active?: "home" | "about" | "features" | "pricing" | "blog";
 }
 const { active } = Astro.props;
 ---
@@ -16,6 +16,7 @@ const { active } = Astro.props;
       <a class="ec-link" href="/features/" aria-current={active === "features" ? "page" : undefined}>Features</a>
       <a class="ec-link" href="/pricing/" aria-current={active === "pricing" ? "page" : undefined}>Pricing</a>
       <a class="ec-link" href="/guides/quickstart/">Docs</a>
+      <a class="ec-link" href="/blog/" aria-current={active === "blog" ? "page" : undefined}>Blog</a>
       <a class="ec-link" href="/about/" aria-current={active === "about" ? "page" : undefined}>About</a>
     </nav>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
