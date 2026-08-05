@@ -31,23 +31,23 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@clack/prompts": "^0.9.0",
+    "@clack/prompts": "^1.7.0",
     "@kalayaan/adapter-d1": "workspace:*",
     "@kalayaan/admin": "workspace:*",
     "@kalayaan/config": "workspace:*",
     "@kalayaan/core": "workspace:*",
     "@kalayaan/runtime": "workspace:*",
-    "commander": "^13.1.0",
-    "esbuild": "^0.24.0",
-    "wrangler": "^4.112.0",
+    "commander": "^15.0.0",
+    "esbuild": "^0.28.1",
+    "wrangler": "^4.118.0",
     "@kalayaan/adapter-relational": "workspace:*",
     "@kalayaan/adapter-postgres": "workspace:*",
     "@kalayaan/adapter-mysql": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.1.2",
     "tsup": "^8.4.0",
-    "vitest": "^3.1.0"
+    "vitest": "^4.1.10"
   },
   "bin": {
     "kalayaan": "./dist/bin.js"

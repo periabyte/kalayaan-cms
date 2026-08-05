@@ -11,22 +11,22 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
-    "@astrojs/starlight": "^0.30.0",
-    "@tiptap/extension-highlight": "^2.27.2",
-    "@tiptap/extension-image": "^2.27.2",
-    "@tiptap/extension-link": "^2.27.2",
-    "@tiptap/extension-task-item": "^2.27.2",
-    "@tiptap/extension-task-list": "^2.27.2",
-    "@tiptap/extension-text-align": "^2.27.2",
-    "@tiptap/extension-underline": "^2.27.2",
-    "@tiptap/html": "^2.27.2",
-    "@tiptap/starter-kit": "^2.27.2",
-    "astro": "^5.0.0",
-    "astro-expressive-code": "^0.38.3",
-    "sharp": "^0.33.5"
+    "@astrojs/starlight": "^0.41.6",
+    "@tiptap/extension-highlight": "^3.29.2",
+    "@tiptap/extension-image": "^3.29.2",
+    "@tiptap/extension-link": "^3.29.2",
+    "@tiptap/extension-task-item": "^3.29.2",
+    "@tiptap/extension-task-list": "^3.29.2",
+    "@tiptap/extension-text-align": "^3.29.2",
+    "@tiptap/extension-underline": "^3.29.2",
+    "@tiptap/html": "^3.29.2",
+    "@tiptap/starter-kit": "^3.29.2",
+    "astro": "^7.1.6",
+    "astro-expressive-code": "^0.44.1",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.4",
-    "typescript": "^5.8.0"
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^7.0.2"
   }
 }
