@@ -1,25 +1,23 @@
-name: Deploy docs
+name: Check docs build
+
+# Deployment moved to Cloudflare Pages (project "kalayaan-cms"), which builds
+# from this repo on push and, unlike GitHub Pages, exposes a deploy hook the
+# CMS can call on publish. This workflow no longer deploys anything — it keeps
+# the build honest on PRs, where Pages' own build wouldn't gate a merge.
+#
+# It runs the same command Pages runs, including the post-build SEO check, so a
+# broken page fails here before it fails the deploy.
 
 on:
   push:
     branches: [main]
     paths: ["docs-site/**", ".github/workflows/docs.yml"]
+  pull_request:
+    paths: ["docs-site/**", ".github/workflows/docs.yml"]
   workflow_dispatch:
-  # Publishing a post in the CMS (kalayaan-admin.periabyte.dev) fires a webhook
-  # at GitHub's dispatches endpoint with this event type, which rebuilds the
-  # site against the new content. This is what makes blog content editable
-  # without a commit — the build pulls posts from the CMS at build time.
-  repository_dispatch:
-    types: [cms-publish]
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -33,17 +31,4 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter kalayaan-docs build
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs-site/dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - run: node docs-site/scripts/check-seo.mjs
