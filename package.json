@@ -15,9 +15,9 @@
     "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.0",
-    "prettier": "^3.5.0",
-    "turbo": "^2.5.0",
-    "typescript": "^5.8.0"
+    "@changesets/cli": "^3.0.0",
+    "prettier": "^3.9.6",
+    "turbo": "^2.10.10",
+    "typescript": "^7.0.2"
   }
 }

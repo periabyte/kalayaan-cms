@@ -43,6 +43,6 @@
   "devDependencies": {
     "@kalayaan/adapter-conformance": "workspace:^",
     "tsup": "^8.4.0",
-    "vitest": "^3.1.0"
+    "vitest": "^4.1.10"
   }
 }
